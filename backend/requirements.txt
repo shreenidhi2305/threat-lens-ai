@@ -1,0 +1,17 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+pydantic-settings==2.10.1
+sqlalchemy==2.0.43
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+supabase==2.18.1
+python-multipart==0.0.20
+
+numpy==2.3.2
+pandas==2.3.2
+scikit-learn==1.7.1
+tensorflow==2.20.0
+
+yara-python==4.5.4
+pefile==2024.8.26
