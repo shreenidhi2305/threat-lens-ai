@@ -47,4 +47,5 @@ class AnalysisResult(BaseModel):
     md5: str
     hashes: FileHashes
     metadata: FileMetadata
+    signature_match: SignatureMatch
     notes: list[str]

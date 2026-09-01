@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends
 
 from app.core.dependencies import CurrentUser, require_roles
-from app.modules.file_analysis.schemas import AnalysisRequest, AnalysisResult
-from app.modules.file_analysis.service import file_analysis_service
+from app.modules.threat_monitoring.schemas import ThreatSnapshot
+from app.modules.threat_monitoring.service import threat_monitoring_service
 
 router = APIRouter()
 
 
-@router.post('/scan', response_model=AnalysisResult)
-def scan_file(
-    payload: AnalysisRequest,
-    _user: CurrentUser = Depends(require_roles('Security Analyst', 'Administrator', 'SOC Team Member')),
-) -> AnalysisResult:
-    return file_analysis_service.analyze_static_file(payload.object_path, payload.object_path.encode('utf-8'))
+@router.get('/snapshot', response_model=ThreatSnapshot)
+def snapshot(
+    _user: CurrentUser = Depends(require_roles('Security Analyst', 'SOC Team Member', 'Administrator')),
+) -> ThreatSnapshot:
+    return threat_monitoring_service.get_snapshot()

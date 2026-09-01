@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Depends
 
-from app.core.dependencies import CurrentUser, require_roles
-from app.modules.file_analysis.schemas import AnalysisRequest, AnalysisResult
-from app.modules.file_analysis.service import file_analysis_service
+from app.core.dependencies import CurrentUser, get_current_user
+from app.modules.users.schemas import UserProfile
+from app.modules.users.service import user_service
 
 router = APIRouter()
 
 
-@router.post('/scan', response_model=AnalysisResult)
-def scan_file(
-    payload: AnalysisRequest,
-    _user: CurrentUser = Depends(get_current_user),
-) -> AnalysisResult:
-    return file_analysis_service.analyze_static_file(payload.object_path, payload.object_path.encode('utf-8'))
+@router.get('/me', response_model=UserProfile)
+def get_me(current_user: CurrentUser = Depends(get_current_user)) -> UserProfile:
+    return user_service.get_me(current_user.user_id, current_user.roles)

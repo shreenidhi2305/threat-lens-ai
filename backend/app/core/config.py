@@ -19,5 +19,13 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
+    @property
+    def supabase_configured(self) -> bool:
+        """True when real Supabase credentials are present.
+
+        When False, auth falls back to a local dev login (see auth service).
+        """
+        return bool(self.SUPABASE_URL and self.SUPABASE_SERVICE_KEY)
+
 
 settings = Settings()
