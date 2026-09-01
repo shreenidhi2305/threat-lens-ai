@@ -1,0 +1,6 @@
+Project meeting notes
+
+- Review Q3 roadmap
+- Assign frontend tasks
+- Book demo room for Friday
+- Follow up with the design team

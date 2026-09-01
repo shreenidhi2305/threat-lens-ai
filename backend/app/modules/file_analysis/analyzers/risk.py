@@ -22,7 +22,7 @@ _SUSPICIOUS_STRING_PATTERNS: dict[str, re.Pattern[bytes]] = {
     'Credential tooling': re.compile(rb'mimikatz|sekurlsa|lsass', re.IGNORECASE),
 }
 
-_SEVERITY_WEIGHT = {'high': 30, 'medium': 18, 'low': 8, 'info': 2}
+_SEVERITY_WEIGHT = {'high': 30, 'medium': 22, 'low': 8, 'info': 2}
 _SIGNATURE_SEVERITY_WEIGHT = {'high': 75, 'medium': 45, 'low': 20, 'info': 5}
 _YARA_TOTAL_CAP = 50
 

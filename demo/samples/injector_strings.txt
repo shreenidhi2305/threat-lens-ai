@@ -1,0 +1,6 @@
+imports:
+VirtualAllocEx
+WriteProcessMemory
+CreateRemoteThread
+NtUnmapViewOfSection
+SetThreadContext

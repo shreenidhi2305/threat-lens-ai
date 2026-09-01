@@ -2,6 +2,28 @@
 
 ThreatLens AI is a full-stack cybersecurity platform for static malware analysis, machine-learning-based classification, threat monitoring, alerting, and reporting.
 
+## Milestone status
+
+**Milestone 1 (Weeks 1–2) — complete.** Authentication + RBAC, file upload, and
+the full static-analysis pipeline (hashing, metadata, signature matching, YARA,
+IOC extraction, rule-based risk scoring). See [`docs/MILESTONE_1.md`](docs/MILESTONE_1.md)
+for the deliverable checklist and [`demo/DEMO_SCRIPT.md`](demo/DEMO_SCRIPT.md) for
+a walkthrough. Milestones 2–4 (ML classifier, threat monitoring, analytics,
+deployment) are scaffolded but not yet implemented.
+
+### Quick start (local, no database needed)
+
+```bash
+# terminal 1 — API
+python -m uvicorn app.main:app --app-dir backend --port 8000
+# terminal 2 — UI
+npm --prefix frontend install && npm --prefix frontend run dev
+```
+
+Open http://localhost:5173 and sign in as `analyst@local` (any password). With
+no Supabase env vars set, the backend uses a local dev login and stores uploads
+under `backend/var/uploads/`. Backend tests: `cd backend && python -m pytest`.
+
 ## Architecture
 
 This repository is organized as a modular monorepo:
