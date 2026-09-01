@@ -91,8 +91,7 @@ report. The file is stored and analyzed, never executed.*
    distribution.
 2. **Analytics** — detection rate, risk breakdown, top classifications.
 3. **Alerts** — the two high-risk files raised alerts automatically.
-4. Optional: `docs/MILESTONE_1.md` (deliverable checklist) and
-   `cd backend && python -m pytest -q` → **39 passed**.
+4. Optional: `cd backend && python -m pytest -q` → **39 passed**.
 
 ---
 

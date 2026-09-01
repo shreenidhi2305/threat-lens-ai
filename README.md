@@ -6,10 +6,8 @@ ThreatLens AI is a full-stack cybersecurity platform for static malware analysis
 
 **Milestone 1 (Weeks 1–2) — complete.** Authentication + RBAC, file upload, and
 the full static-analysis pipeline (hashing, metadata, signature matching, YARA,
-IOC extraction, rule-based risk scoring). See [`docs/MILESTONE_1.md`](docs/MILESTONE_1.md)
-for the deliverable checklist and [`demo/DEMO_SCRIPT.md`](demo/DEMO_SCRIPT.md) for
-a walkthrough. Milestones 2–4 (ML classifier, threat monitoring, analytics,
-deployment) are scaffolded but not yet implemented.
+IOC extraction, rule-based risk scoring). Milestones 2–4 (ML classifier, threat
+monitoring, analytics, deployment) are scaffolded but not yet implemented.
 
 ### Quick start (local, no database needed)
 
