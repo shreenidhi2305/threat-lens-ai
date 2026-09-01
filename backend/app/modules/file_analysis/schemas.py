@@ -4,6 +4,10 @@ from pydantic import BaseModel, Field
 class AnalysisRequest(BaseModel):
     object_path: str
 
+class SignatureMatch(BaseModel):
+    matched: bool
+    name: str | None
+    type: str | None
 
 class FileHashes(BaseModel):
     """Cryptographic digests of the uploaded sample."""
