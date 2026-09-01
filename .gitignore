@@ -14,6 +14,7 @@ __pycache__/
 
 # Build
 frontend/dist/
+*.zip
 
 # Local uploaded samples (dev storage backend)
 backend/var/

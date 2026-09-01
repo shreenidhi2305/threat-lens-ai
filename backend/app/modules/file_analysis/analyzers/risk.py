@@ -12,22 +12,42 @@ import re
 _SUSPICIOUS_STRING_PATTERNS: dict[str, re.Pattern[bytes]] = {
     'PowerShell execution': re.compile(rb'powershell|pwsh', re.IGNORECASE),
     'Encoded PowerShell command': re.compile(rb'-enc(odedcommand)?\b', re.IGNORECASE),
+    'Execution-policy bypass': re.compile(rb'-ep\s+bypass|-executionpolicy\s+bypass', re.IGNORECASE),
     'Command shell invocation': re.compile(rb'cmd\.exe\s*/c', re.IGNORECASE),
     'Script host (wscript/cscript)': re.compile(rb'\b[wc]script\.exe', re.IGNORECASE),
     'LOLBins (rundll32/regsvr32/mshta)': re.compile(rb'\b(rundll32|regsvr32|mshta)\b', re.IGNORECASE),
-    'certutil download': re.compile(rb'certutil.{0,20}-urlcache', re.IGNORECASE),
+    'certutil / bitsadmin download': re.compile(
+        rb'certutil.{0,20}-urlcache|bitsadmin\s*/transfer', re.IGNORECASE
+    ),
     'Base64 decode': re.compile(rb'FromBase64String|base64\s+-d|certutil.{0,20}-decode', re.IGNORECASE),
     'Shadow copy deletion': re.compile(rb'vssadmin.{0,20}delete.{0,20}shadows', re.IGNORECASE),
     'Scheduled task creation': re.compile(rb'schtasks\s*/create', re.IGNORECASE),
-    'Credential tooling': re.compile(rb'mimikatz|sekurlsa|lsass', re.IGNORECASE),
+    'Defender tampering': re.compile(rb'Set-MpPreference|Add-MpPreference|DisableRealtimeMonitoring', re.IGNORECASE),
+    'Credential tooling': re.compile(rb'mimikatz|sekurlsa|lsass\.exe', re.IGNORECASE),
+    'AMSI bypass': re.compile(rb'AmsiScanBuffer|amsiInitFailed|AmsiUtils', re.IGNORECASE),
 }
 
-_SEVERITY_WEIGHT = {'high': 30, 'medium': 22, 'low': 8, 'info': 2}
-_SIGNATURE_SEVERITY_WEIGHT = {'high': 75, 'medium': 45, 'low': 20, 'info': 5}
-_YARA_TOTAL_CAP = 50
+_SEVERITY_WEIGHT = {'high': 30, 'medium': 20, 'low': 8, 'info': 2}
+_SIGNATURE_SEVERITY_WEIGHT = {'high': 80, 'medium': 45, 'low': 20, 'info': 5}
+_YARA_TOTAL_CAP = 55
+
+# A confirmed signature hit or a high-severity YARA rule is high-confidence
+# malicious on its own; floor the score here so the verdict reads "high".
+_CONFIRMED_FLOOR = 72
 
 _LOW_MAX = 19
 _MEDIUM_MAX = 59
+
+# YARA "family" values that name a technique, not a malware family -- skip these
+# when choosing a classification label.
+_TECHNIQUE_FAMILIES = {
+    'Obfuscation', 'Packed', 'AntiAnalysis', 'DefenseEvasion', 'Persistence',
+    'PrivEsc', 'Impact', 'Test',
+}
+
+
+def _has_high_yara(yara_matches: list[dict]) -> bool:
+    return any(str(m.get('meta', {}).get('severity', '')).lower() == 'high' for m in yara_matches)
 
 
 def _classify(score: int, signature_match: dict, yara_matches: list[dict]) -> str:
@@ -35,10 +55,15 @@ def _classify(score: int, signature_match: dict, yara_matches: list[dict]) -> st
         return f"Known {signature_match.get('type') or 'Malware'} ({signature_match['name']})"
     if score > _MEDIUM_MAX:
         family = next(
-            (m['meta'].get('family') for m in yara_matches if m.get('meta', {}).get('family')),
-            'Malware',
+            (
+                m['meta'].get('family')
+                for m in yara_matches
+                if m.get('meta', {}).get('family')
+                and m['meta']['family'] not in _TECHNIQUE_FAMILIES
+            ),
+            None,
         )
-        return f'Potential {family} Malware' if family != 'Malware' else 'Potential Malware'
+        return f'Potential {family} Malware' if family else 'Potential Malware'
     if score > _LOW_MAX:
         return 'Suspicious - Manual Review Recommended'
     return 'Likely Benign'
@@ -77,8 +102,7 @@ def assess(
     indicators: list[str] = []
 
     if signature_match.get('matched'):
-        weight = _SIGNATURE_SEVERITY_WEIGHT.get(signature_match.get('severity') or 'high', 60)
-        score += weight
+        score += _SIGNATURE_SEVERITY_WEIGHT.get(signature_match.get('severity') or 'high', 60)
         indicators.append(f"Known malware signature: {signature_match['name']}")
 
     yara_contribution = 0
@@ -107,12 +131,15 @@ def assess(
         indicators.append(f"Embedded URL(s): {len(network['urls'])}")
     if network.get('ips'):
         score += 8
-        indicators.append(f"Embedded public IP address(es): {len(network['ips'])}")
+        indicators.append(f"Embedded IP address(es): {len(network['ips'])}")
 
     suspicious_strings = find_suspicious_strings(data)
     if suspicious_strings:
-        score += min(8 + 4 * len(suspicious_strings), 24)
+        score += min(6 + 4 * len(suspicious_strings), 24)
         indicators.append('Suspicious command strings: ' + ', '.join(suspicious_strings))
+
+    if signature_match.get('matched') or _has_high_yara(yara_matches):
+        score = max(score, _CONFIRMED_FLOOR)
 
     score = max(0, min(score, 100))
     level = _level(score)

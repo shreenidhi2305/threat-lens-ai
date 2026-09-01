@@ -1,5 +1,5 @@
 {
-  "_comment": "Hash-based malware signatures (SHA-256). Demo/seed data for the static-analysis signature workflow. Replace/extend with a real feed (MalwareBazaar, internal research).",
+  "_comment": "Hash-based malware signatures (SHA-256). Seed/demo data for the static-analysis signature workflow. Replace/extend with a real feed (MalwareBazaar, internal research).",
   "signatures": [
     {
       "sha256": "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
@@ -8,9 +8,15 @@
       "severity": "info"
     },
     {
-      "sha256": "526421ddafb6d4624a7c293c65bfdd328f4c6ff3690493f88b0e271e37da5e1a",
-      "name": "ThreatLens.Demo.Trojan",
+      "sha256": "3bf6d2715980c17eef8049d86c3e057b602b80b2e7344a4b3f2b6262950174a7",
+      "name": "TrojanDownloader.Win32.Demo",
       "type": "Trojan",
+      "severity": "high"
+    },
+    {
+      "sha256": "38566f29ac3085578d983ec25741e08c1e481c6443712cc530de34ee545ee821",
+      "name": "Ransom.Demo.Locker",
+      "type": "Ransomware",
       "severity": "high"
     },
     {

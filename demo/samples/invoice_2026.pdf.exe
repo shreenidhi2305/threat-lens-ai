@@ -1,3 +1,4 @@
-This looks like a document but the file name claims to be an executable.
+This looks like a document but the name claims to be an executable.
 rundll32.exe shell32.dll,Control_RunDLL
 reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v svc /d payload
+schtasks /create /sc onlogon /tn Updater /tr payload.exe

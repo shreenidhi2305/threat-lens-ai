@@ -4,3 +4,5 @@ WriteProcessMemory
 CreateRemoteThread
 NtUnmapViewOfSection
 SetThreadContext
+QueueUserAPC
+RtlCreateUserThread

