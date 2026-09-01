@@ -3,12 +3,90 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* neutrals — cool, faintly blue-tinted */
+  --bg: oklch(0.15 0.006 265);
+  --surface: oklch(0.185 0.006 265);
+  --surface-raised: oklch(0.225 0.007 265);
+  --line: oklch(0.29 0.008 265);
+  --line-soft: oklch(0.24 0.007 265);
+  --text: oklch(0.96 0.004 265);
+  --text-secondary: oklch(0.74 0.006 265);
+  --text-muted: oklch(0.56 0.006 265);
+
+  /* accent — interactive affordance only */
+  --accent: oklch(0.7 0.13 265);
+  --accent-quiet: oklch(0.7 0.13 265 / 0.14);
+
+  /* severity — the only loud color */
+  --risk-low: oklch(0.76 0.14 158);
+  --risk-medium: oklch(0.82 0.13 82);
+  --risk-high: oklch(0.68 0.19 25);
+  --risk-low-wash: oklch(0.76 0.14 158 / 0.13);
+  --risk-medium-wash: oklch(0.82 0.13 82 / 0.13);
+  --risk-high-wash: oklch(0.68 0.19 25 / 0.14);
+
+  --radius: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #020617;
-  color: #e2e8f0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-feature-settings: 'cv05', 'ss01';
+}
+
+::selection {
+  background: var(--accent-quiet);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* thin dark scrollbars, consistent with the shell */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+  border: 3px solid var(--bg);
+}
+
+@keyframes tl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tl-rise {
+  animation: tl-rise 0.2s var(--ease) both;
 }

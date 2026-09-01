@@ -3,17 +3,24 @@ import type { ReactNode } from 'react';
 
 import { useAuth } from '../auth/AuthContext';
 import { AppLayout } from '../layouts/AppLayout';
-import { ComingSoonPage } from '../pages/ComingSoonPage';
+import { AlertsPage } from '../pages/AlertsPage';
+import { AnalyticsPage } from '../pages/AnalyticsPage';
 import { DashboardPage } from '../pages/DashboardPage';
-import { FileAnalysisPage } from '../pages/FileAnalysisPage';
-import { FileUploadPage } from '../pages/FileUploadPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { ReportPage } from '../pages/ReportPage';
+import { SubmitPage } from '../pages/SubmitPage';
+import { ThreatsPage } from '../pages/ThreatsPage';
+import { Spinner } from '../ui/primitives';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) {
-    return <div className="p-10 text-slate-400">Loading…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-bg">
+        <Spinner />
+      </div>
+    );
   }
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
@@ -31,18 +38,11 @@ export function AppRouter() {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/upload" element={<FileUploadPage />} />
-          <Route path="/analysis" element={<FileAnalysisPage />} />
-          <Route
-            path="/malware-report"
-            element={<ComingSoonPage title="Malware Report" milestone={2} />}
-          />
-          <Route
-            path="/threat-monitoring"
-            element={<ComingSoonPage title="Threat Monitoring" milestone={2} />}
-          />
-          <Route path="/alerts" element={<ComingSoonPage title="Alerts" milestone={2} />} />
-          <Route path="/analytics" element={<ComingSoonPage title="Analytics" milestone={3} />} />
+          <Route path="/submit" element={<SubmitPage />} />
+          <Route path="/reports" element={<ReportPage />} />
+          <Route path="/threats" element={<ThreatsPage />} />
+          <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
