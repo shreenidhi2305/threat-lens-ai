@@ -15,6 +15,9 @@ __pycache__/
 # Build
 frontend/dist/
 
+# Local uploaded samples (dev storage backend)
+backend/var/
+
 # OS / IDE
 .DS_Store
 .vscode/

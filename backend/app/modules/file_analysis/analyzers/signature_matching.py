@@ -1,23 +1,30 @@
-KNOWN_SIGNATURES = {
-    "fde90b1cbae13e703154c46f51b09c0f30e744659c1931c798104f933e4abb93": {
-        "name": "Test.Trojan",
-        "type": "Trojan",
-    }
-}
+"""Hash-based (signature) malware detection.
+
+Looks the sample's SHA-256 up against a local signature set
+(``file_analysis/data/signatures.json``). This is the fast, zero-false-positive
+first pass; behavioural/ML classification comes later in the pipeline.
+"""
+
+import functools
+import json
+from pathlib import Path
+
+_SIGNATURES_FILE = Path(__file__).resolve().parent.parent / 'data' / 'signatures.json'
+
+
+@functools.lru_cache(maxsize=1)
+def _signatures() -> dict[str, dict]:
+    raw = json.loads(_SIGNATURES_FILE.read_text(encoding='utf-8'))
+    return {entry['sha256'].lower(): entry for entry in raw.get('signatures', [])}
 
 
 def match_signature(sha256: str) -> dict:
-    signature = KNOWN_SIGNATURES.get(sha256)
-
-    if signature:
-        return {
-            "matched": True,
-            "name": signature["name"],
-            "type": signature["type"],
-        }
-
+    entry = _signatures().get(sha256.lower())
+    if entry is None:
+        return {'matched': False, 'name': None, 'type': None, 'severity': None}
     return {
-        "matched": False,
-        "name": None,
-        "type": None,
+        'matched': True,
+        'name': entry['name'],
+        'type': entry.get('type'),
+        'severity': entry.get('severity'),
     }

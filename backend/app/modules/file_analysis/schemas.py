@@ -4,10 +4,13 @@ from pydantic import BaseModel, Field
 class AnalysisRequest(BaseModel):
     object_path: str
 
+
 class SignatureMatch(BaseModel):
     matched: bool
-    name: str | None
-    type: str | None
+    name: str | None = None
+    type: str | None = None
+    severity: str | None = None
+
 
 class FileHashes(BaseModel):
     """Cryptographic digests of the uploaded sample."""
@@ -40,6 +43,26 @@ class FileMetadata(BaseModel):
     likely_text: bool = Field(description="Whether the sample looks like a text file.")
 
 
+class YaraMatch(BaseModel):
+    rule: str
+    tags: list[str] = []
+    meta: dict[str, object] = {}
+    matched_strings: list[str] = []
+
+
+class NetworkIndicators(BaseModel):
+    urls: list[str] = []
+    ips: list[str] = []
+    domains: list[str] = []
+
+
+class RiskAssessment(BaseModel):
+    score: int = Field(ge=0, le=100, description="Aggregate static risk score, 0-100.")
+    level: str = Field(description="low | medium | high")
+    classification: str = Field(description="Human-readable verdict.")
+    recommended_action: str
+
+
 class AnalysisResult(BaseModel):
     object_path: str
     # Kept as top-level fields for backward compatibility with the existing contract.
@@ -48,4 +71,11 @@ class AnalysisResult(BaseModel):
     hashes: FileHashes
     metadata: FileMetadata
     signature_match: SignatureMatch
+    yara_matches: list[YaraMatch] = []
+    yara_available: bool = True
+    network_indicators: NetworkIndicators = NetworkIndicators()
+    suspicious_indicators: list[str] = []
+    suspicious_strings: list[str] = []
+    strings_sample: list[str] = []
+    risk: RiskAssessment
     notes: list[str]

@@ -72,7 +72,11 @@ _TYPE_EXTENSIONS: dict[str, set[str]] = {
     'image/gif': {'.gif'},
     'image/jpeg': {'.jpg', '.jpeg', '.jpe'},
     'text/x-shellscript': {'.sh', '.bash', ''},
-    'text/plain': {'.txt', '.log', '.csv', '.ini', '.cfg', '.json', '.xml', '.md', ''},
+    'text/plain': {
+        '.txt', '.log', '.csv', '.ini', '.cfg', '.conf', '.json', '.xml', '.yaml', '.yml', '.md',
+        '.ps1', '.psm1', '.bat', '.cmd', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.hta', '.py',
+        '.pl', '.rb', '.php', '.html', '.htm', '',
+    },
 }
 
 
