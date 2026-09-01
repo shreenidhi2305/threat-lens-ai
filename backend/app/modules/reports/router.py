@@ -1,11 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.modules.reports.schemas import ReportStatus
-from app.modules.reports.service import reports_service
+from app.core.dependencies import CurrentUser, require_roles
+from app.modules.file_analysis.schemas import AnalysisRequest, AnalysisResult
+from app.modules.file_analysis.service import file_analysis_service
 
 router = APIRouter()
 
 
-@router.get('/{report_id}', response_model=ReportStatus)
-def get_report_status(report_id: str) -> ReportStatus:
-    return reports_service.get_report_status(report_id)
+@router.post('/scan', response_model=AnalysisResult)
+def scan_file(
+    payload: AnalysisRequest,
+    _user: CurrentUser = Depends(require_roles('Security Analyst', 'Administrator', 'Researcher','SOC Team Member')),
+) -> AnalysisResult:
+    return file_analysis_service.analyze_static_file(payload.object_path, payload.object_path.encode('utf-8'))
