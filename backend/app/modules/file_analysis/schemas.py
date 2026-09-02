@@ -38,7 +38,11 @@ class FileMetadata(BaseModel):
     )
     printable_ratio: float = Field(description="Fraction of printable-ASCII bytes.")
     likely_text: bool = Field(description="Whether the sample looks like a text file.")
-
+class YaraMatch(BaseModel):
+    rule: str
+    namespace: str
+    tags: list[str]
+    meta: dict
 
 class AnalysisResult(BaseModel):
     object_path: str
@@ -47,4 +51,5 @@ class AnalysisResult(BaseModel):
     md5: str
     hashes: FileHashes
     metadata: FileMetadata
+    yara_matches: list[YaraMatch]
     notes: list[str]

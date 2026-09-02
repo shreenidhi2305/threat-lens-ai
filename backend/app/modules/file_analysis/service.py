@@ -1,11 +1,13 @@
 from app.modules.file_analysis.analyzers.hashing import calculate_hashes
 from app.modules.file_analysis.analyzers.metadata import extract_metadata
 from app.modules.file_analysis.analyzers.signature_matching import match_signature
+from app.modules.file_analysis.analyzers.yara import scan_with_yara
 from app.modules.file_analysis.schemas import (
     AnalysisResult,
     FileHashes,
     FileMetadata,
     SignatureMatch,
+    YaraMatch,
 )
 
 
@@ -17,6 +19,8 @@ class FileAnalysisService:
 
         metadata = extract_metadata(data, filename=object_path)
 
+        yara_results = scan_with_yara(data)
+
         signature_result = match_signature(hashes["sha256"])
 
         return AnalysisResult(
@@ -26,6 +30,7 @@ class FileAnalysisService:
             hashes=FileHashes(**hashes),
             metadata=FileMetadata(**metadata),
             signature_match=SignatureMatch(**signature_result),
+            yara_matches=[YaraMatch(**result) for result in yara_results],
             notes=[
                 "Static analysis scaffold only. Do not execute uploaded files."
             ],
