@@ -1,51 +1,52 @@
-import { Link } from 'react-router-dom';
-
 import { ScanList } from '../components/ScanList';
-import { getHistory } from '../lib/history';
+import { fetchDetections, fetchThreatSnapshot } from '../lib/api';
+import { useAsync } from '../lib/useAsync';
 import { RadarIcon } from '../ui/icons';
-import { EmptyState } from '../ui/primitives';
+import { EmptyState, Spinner } from '../ui/primitives';
 
 export function ThreatsPage() {
-  const threats = getHistory().filter((h) => h.level === 'high' || h.level === 'medium');
+  const detections = useAsync(() => fetchDetections(200));
+  const snapshot = useAsync(fetchThreatSnapshot);
+
+  const threats = (detections.data ?? []).filter((d) => d.verdict_label !== 'benign');
+  const s = snapshot.data;
 
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold tracking-[-0.01em]">Threat Monitor</h2>
         <p className="mt-1 text-sm text-secondary">
-          Files that scored medium or high risk in static analysis.
+          Files the detection pipeline flagged as malicious or suspicious.
         </p>
       </div>
 
-      {threats.length === 0 ? (
+      {detections.loading ? (
+        <div className="flex justify-center py-16">
+          <Spinner />
+        </div>
+      ) : threats.length === 0 ? (
         <EmptyState
           icon={<RadarIcon />}
           title="No threats detected"
-          description="Files that raise indicators or match a signature or YARA rule will surface here."
+          description="Files flagged by the ML model, a signature, or a YARA rule surface here."
         />
       ) : (
         <>
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm">
             <span className="text-secondary">
-              <span className="font-mono text-risk-high">
-                {threats.filter((t) => t.level === 'high').length}
-              </span>{' '}
-              high
+              <span className="font-mono text-risk-high">{s?.malicious ?? 0}</span> malicious
             </span>
             <span className="text-secondary">
-              <span className="font-mono text-risk-medium">
-                {threats.filter((t) => t.level === 'medium').length}
-              </span>{' '}
-              medium
+              <span className="font-mono text-risk-medium">{s?.suspicious ?? 0}</span> suspicious
             </span>
+            {s && s.top_families.length > 0 && (
+              <span className="text-secondary">
+                top family:{' '}
+                <span className="text-text">{s.top_families[0].family}</span> ({s.top_families[0].count})
+              </span>
+            )}
           </div>
-          <ScanList entries={threats} />
-          <p className="text-xs text-muted">
-            <Link to="/reports" className="text-accent hover:underline">
-              Open the latest report
-            </Link>{' '}
-            for full detail.
-          </p>
+          <ScanList detections={threats} />
         </>
       )}
     </div>

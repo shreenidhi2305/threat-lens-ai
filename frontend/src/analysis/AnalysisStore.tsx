@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { recordAnalysis } from '../lib/history';
 import type { AnalysisResult } from '../lib/types';
 
 const SESSION_KEY = 'threatlens.lastResult';
@@ -27,7 +26,6 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
   const commit = useCallback((next: AnalysisResult) => {
     setResult(next);
-    recordAnalysis(next);
     try {
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
     } catch {

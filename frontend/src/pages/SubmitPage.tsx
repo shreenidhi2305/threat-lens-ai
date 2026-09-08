@@ -46,8 +46,8 @@ export function SubmitPage() {
       <div>
         <h2 className="text-lg font-semibold tracking-[-0.01em]">Submit a file for analysis</h2>
         <p className="mt-1 text-sm text-secondary">
-          The file is stored and analyzed statically: hashing, type identification, signature and
-          YARA matching, and indicator extraction. It is never executed.
+          The file runs through the full pipeline: static analysis (hashing, type ID, signatures,
+          YARA, indicators) and the ML detection model, fused into one verdict. It is never executed.
         </p>
       </div>
 

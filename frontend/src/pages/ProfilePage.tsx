@@ -1,23 +1,25 @@
 import { useAuth } from '../auth/AuthContext';
-import { clearHistory, getHistory } from '../lib/history';
-import { Button } from '../ui/Button';
+import { fetchModelInfo } from '../lib/api';
+import { useAsync } from '../lib/useAsync';
 import { InfoRow, Panel } from '../ui/primitives';
 
 const PERMISSIONS: Record<string, string[]> = {
   'Security Analyst': [
-    'Submit files for static analysis',
-    'View analysis reports and threat monitor',
-    'Review alerts',
+    'Submit files for analysis',
+    'View analysis reports and the threat monitor',
+    'Review and triage alerts',
   ],
-  'SOC Team Member': ['View threat monitor and alerts', 'Access analytics'],
+  'SOC Team Member': ['View the threat monitor and alerts', 'Access analytics'],
   Administrator: ['Everything analysts can do', 'Manage users, roles, and platform settings'],
-  Researcher: ['Submit and bulk-analyze samples', 'Review classifications and export findings'],
+  Researcher: ['Submit and bulk-analyse samples', 'Review classifications and export findings'],
 };
 
 export function ProfilePage() {
   const { user } = useAuth();
-  const scanCount = getHistory().length;
+  const model = useAsync(fetchModelInfo);
   const perms = user ? (PERMISSIONS[user.role] ?? []) : [];
+  const det = model.data?.detector;
+  const clf = model.data?.classifier;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -27,7 +29,6 @@ export function ProfilePage() {
         <InfoRow label="Email" value={user?.email ?? '—'} />
         <InfoRow label="Role" value={user?.role ?? '—'} />
         <InfoRow label="User ID" value={user?.id ?? '—'} mono copy />
-        <InfoRow label="Files analyzed (session)" value={scanCount} />
       </Panel>
 
       <Panel title={`${user?.role ?? 'Role'} permissions`}>
@@ -41,22 +42,21 @@ export function ProfilePage() {
         </ul>
       </Panel>
 
-      <Panel title="Session data">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-secondary">
-            Analysis history is stored in this browser only.
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              clearHistory();
-              location.reload();
-            }}
-          >
-            Clear history
-          </Button>
-        </div>
+      <Panel title="Detection models">
+        {det ? (
+          <>
+            <InfoRow label="Detector" value={det.version} />
+            <InfoRow
+              label="ROC-AUC"
+              value={String((det.metrics as Record<string, number>).roc_auc ?? '—')}
+            />
+            <InfoRow label="Classifier" value={clf ? clf.version : 'not loaded'} />
+            <InfoRow label="Categories" value={clf ? clf.classes.join(', ') : '—'} />
+            <InfoRow label="Feature vector" value={`${model.data?.feature_count ?? '—'} features`} />
+          </>
+        ) : (
+          <p className="text-sm text-secondary">Model registry not loaded.</p>
+        )}
       </Panel>
     </div>
   );

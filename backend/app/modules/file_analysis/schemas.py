@@ -63,6 +63,41 @@ class RiskAssessment(BaseModel):
     recommended_action: str
 
 
+class CategoryScore(BaseModel):
+    category: str
+    probability: float
+
+
+class MLPrediction(BaseModel):
+    """Output of the ML prediction service."""
+
+    available: bool
+    applicable: bool = False
+    malicious: bool | None = None
+    malware_probability: float | None = Field(default=None, ge=0, le=1)
+    category: str | None = None
+    category_confidence: float | None = None
+    top_categories: list[CategoryScore] = []
+    model_versions: dict[str, str | None] = {}
+    reason: str | None = None
+
+
+class Verdict(BaseModel):
+    """The fused final verdict: static rules AND the ML model, combined."""
+
+    label: str = Field(description="malicious | suspicious | benign")
+    score: int = Field(ge=0, le=100, description="Fused risk score, 0-100.")
+    level: str = Field(description="low | medium | high")
+    confidence: float = Field(ge=0, le=1)
+    classification: str = Field(description="Human-readable verdict, e.g. 'Trojan'.")
+    family: str | None = None
+    recommended_action: str
+    sources: dict[str, object] = Field(
+        default_factory=dict, description="What each engine contributed."
+    )
+    agreement: str = Field(description="agree | ml-only | rules-only | conflict")
+
+
 class AnalysisResult(BaseModel):
     object_path: str
     # Kept as top-level fields for backward compatibility with the existing contract.
@@ -78,4 +113,7 @@ class AnalysisResult(BaseModel):
     suspicious_strings: list[str] = []
     strings_sample: list[str] = []
     risk: RiskAssessment
+    # Populated by the pipeline service (Milestone 2). Absent for a bare static scan.
+    ml: MLPrediction | None = None
+    verdict: Verdict | None = None
     notes: list[str]
