@@ -411,10 +411,10 @@ rule Embedded_Base64_Blob
         family      = "Obfuscation"
         mitre       = "T1027"
     strings:
-        $b64      = /[A-Za-z0-9+\/]{512,}={0,2}/
+        $b64      = /[A-Za-z0-9+\/]{1000,}={0,2}/
         $mz_b64   = "TVqQAAMAAAAEAAAA"   /* base64 of "MZ\x90\0\x03\0\0\0\x04\0\0\0" */
     condition:
-        $mz_b64 or #b64 >= 1
+        $mz_b64 or $b64
 }
 
 rule Known_Packer_Section_Names

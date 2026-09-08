@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     # Comma-separated list of origins allowed to call the API from a browser.
     CORS_ALLOW_ORIGINS: str = 'http://localhost:5173,http://127.0.0.1:5173'
 
+    # Alert Service: verdict level at or above which an alert is raised.
+    ALERT_MIN_LEVEL: str = 'high'
+    # Email notifications for alerts (optional; alerts still work without SMTP).
+    SMTP_HOST: str = ''
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ''
+    SMTP_PASSWORD: str = ''
+    SMTP_USE_TLS: bool = True
+    ALERT_EMAIL_FROM: str = 'threatlens@localhost'
+    ALERT_EMAIL_TO: str = ''
+
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
     @property
@@ -33,6 +44,10 @@ class Settings(BaseSettings):
         When False, auth falls back to a local dev login (see auth service).
         """
         return bool(self.SUPABASE_URL and self.SUPABASE_SERVICE_KEY)
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.SMTP_HOST and self.ALERT_EMAIL_TO)
 
 
 settings = Settings()
