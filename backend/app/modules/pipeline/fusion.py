@@ -43,8 +43,12 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
     sig = result.signature_match
     high_yara = _high_severity_yara(result)
 
-    ml_prob = ml.malware_probability if (ml.available and ml.malware_probability is not None) else None
-    ml_malicious = bool(ml.malicious) if ml.available else None
+    # The ML model is trained on PE files. On other types it still runs, but its
+    # output is informational only and the rule engine is authoritative.
+    ml_counts = ml.available and ml.applicable and ml.malware_probability is not None
+    ml_prob = ml.malware_probability if ml_counts else None
+    ml_prob_info = ml.malware_probability if (ml.available and ml.malware_probability is not None) else None
+    ml_malicious = bool(ml.malicious) if ml_counts else None
 
     # 1. blended base score
     if ml_prob is not None:
@@ -71,7 +75,8 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
 
     # 3. agreement between the two engines
     if ml_malicious is None:
-        agreement = 'rules-only'
+        # ML did not weigh in (non-PE, or model absent): rules carry the verdict
+        agreement = 'rules-only' if static_level != 'low' else 'agree'
     elif ml_malicious and static_level in ('medium', 'high'):
         agreement = 'agree'
     elif not ml_malicious and static_level == 'low':
@@ -82,43 +87,44 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
         agreement = 'rules-only'
     else:
         agreement = 'ml-only' if ml_malicious else 'rules-only'
-    # A genuine conflict: the rule engine has a strong opinion the model missed.
+    # A genuine conflict: the model was applicable but missed what the rules caught.
     if ml_prob is not None and ml_prob < 0.20 and (sig.matched or high_yara >= 2):
         agreement = 'conflict'
 
-    # 4. family / category
+    # 4. family / category  (category mapping: signature type > ML category > YARA family)
+    _technique_only = {'Obfuscation', 'Packed', 'AntiAnalysis', 'DefenseEvasion', 'Persistence', 'Test'}
     family: str | None = None
     if sig.matched and sig.type:
         family = sig.type
-    elif ml.available and ml.malicious and (ml.category_confidence or 0) >= 0.35 and ml.category:
+    elif ml_counts and ml.malicious and ml.category and ml.category not in ('benign', 'generic'):
         family = ml.category.capitalize()
     else:
         family = next(
             (
-                str(m.meta.get('family'))
+                str(m.meta['family'])
                 for m in result.yara_matches
-                if m.meta.get('family') and str(m.meta['family']) not in
-                ('Obfuscation', 'Packed', 'AntiAnalysis', 'DefenseEvasion', 'Persistence', 'Test')
+                if m.meta.get('family') and str(m.meta['family']) not in _technique_only
             ),
             None,
         )
 
     # 5. human-readable classification
     contributors: list[str] = []
-    if ml.available and ml_prob is not None:
+    if ml_prob is not None and ml_prob >= 0.5:
         contributors.append(f'ML {ml_prob:.0%}')
     if sig.matched:
         contributors.append('signature match')
     if result.yara_matches:
         contributors.append(f'YARA {len(result.yara_matches)}')
+    suffix = f'  ({", ".join(contributors)})' if contributors else ''
     if label == 'benign':
         classification = 'Likely benign'
     elif family:
-        classification = f'{family}' + (f'  ({", ".join(contributors)})' if contributors else '')
+        classification = f'{family}{suffix}'
     elif label == 'malicious':
-        classification = 'Malware' + (f'  ({", ".join(contributors)})' if contributors else '')
+        classification = f'Malware{suffix}'
     else:
-        classification = 'Suspicious' + (f'  ({", ".join(contributors)})' if contributors else '')
+        classification = f'Suspicious{suffix}'
 
     # 6. confidence
     if agreement == 'agree':
@@ -145,7 +151,8 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
             'yara_rule_count': len(result.yara_matches),
             'yara_high_severity': high_yara,
             'ml_available': ml.available,
-            'ml_probability': ml_prob,
+            'ml_applicable': ml.applicable,
+            'ml_probability': ml_prob_info,
             'ml_category': ml.category if ml.available else None,
             'ml_model_version': ml.model_versions.get('detector') if ml.available else None,
         },

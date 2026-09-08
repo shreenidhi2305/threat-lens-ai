@@ -76,7 +76,7 @@ def test_fusion_rules_only_when_ml_unavailable():
 
 def test_fusion_agrees_when_both_flag():
     result = _static(DROPPER, "d.ps1")
-    ml = MLPrediction(available=True, malicious=True, malware_probability=0.95,
+    ml = MLPrediction(available=True, applicable=True, malicious=True, malware_probability=0.95,
                       category="trojan", category_confidence=0.8, model_versions={"detector": "t"})
     verdict = fuse(result, ml)
     assert verdict.level == "high"
@@ -84,11 +84,23 @@ def test_fusion_agrees_when_both_flag():
     assert verdict.score >= 80
 
 
-def test_fusion_flags_conflict():
-    clean = _static(b"just a normal note about the weather today", "n.txt")
-    ml = MLPrediction(available=True, malicious=True, malware_probability=0.97, model_versions={})
+def test_fusion_ml_only_when_model_flags_clean_looking_file():
+    clean = _static(b"MZ" + b"\x00" * 400, "sample.exe")  # PE-ish, no static signals
+    assert clean.risk.level == "low"
+    ml = MLPrediction(available=True, applicable=True, malicious=True, malware_probability=0.97,
+                      model_versions={})
     verdict = fuse(clean, ml)
-    assert verdict.agreement in ("ml-only", "conflict")
+    assert verdict.agreement == "ml-only"
+    assert verdict.level in ("medium", "high")
+
+
+def test_fusion_non_pe_ml_does_not_count():
+    result = _static(DROPPER, "d.ps1")  # script -> ML not applicable
+    ml = MLPrediction(available=True, applicable=False, malicious=False, malware_probability=0.02,
+                      model_versions={})
+    verdict = fuse(result, ml)
+    assert verdict.level == "high"  # rule engine still drives it
+    assert verdict.agreement == "rules-only"
 
 
 # --- pipeline endpoint ---------------------------------------------------

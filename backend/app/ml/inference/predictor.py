@@ -47,6 +47,7 @@ def predict(data: bytes, analysis: dict | None = None) -> dict[str, Any]:
         return {
             'available': False,
             'reason': 'detection model not loaded',
+            'applicable': False,
             'malicious': None,
             'malware_probability': None,
             'category': None,
@@ -54,6 +55,9 @@ def predict(data: bytes, analysis: dict | None = None) -> dict[str, Any]:
             'model_versions': {},
         }
 
+    # The models are trained on Windows PE files. On other file types they still
+    # run, but the rule engine is the authoritative signal (see fusion).
+    applicable = data[:2] == b'MZ'
     features = extract_features(data, analysis)
 
     det_x = _align(features, detector.feature_names)
@@ -80,9 +84,10 @@ def predict(data: bytes, analysis: dict | None = None) -> dict[str, Any]:
 
     return {
         'available': True,
+        'applicable': applicable,
         'malicious': malicious,
         'malware_probability': round(prob, 4),
-        'category': category if malicious else 'benign',
+        'category': (category if malicious else 'benign'),
         'category_confidence': category_confidence,
         'top_categories': top_categories,
         'model_versions': {

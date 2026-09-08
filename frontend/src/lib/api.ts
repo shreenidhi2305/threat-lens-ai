@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-import type { AnalysisResult, UserProfile } from './types';
+import type {
+  Alert,
+  AlertStats,
+  AnalysisResult,
+  Detection,
+  Incident,
+  ModelInfo,
+  ThreatSnapshot,
+  UserProfile,
+} from './types';
 
 const TOKEN_KEY = 'threatlens.token';
 
@@ -45,3 +54,32 @@ export const uploadSample = async (file: File): Promise<AnalysisResult> => {
   });
   return data;
 };
+
+// --- Milestone 2: monitoring, alerts, model -------------------------------
+
+export const fetchThreatSnapshot = async (): Promise<ThreatSnapshot> =>
+  (await api.get<ThreatSnapshot>('/threats/snapshot')).data;
+
+export const fetchDetections = async (limit = 100): Promise<Detection[]> =>
+  (await api.get<Detection[]>('/threats/detections', { params: { limit } })).data;
+
+export const fetchAlerts = async (status?: string): Promise<Alert[]> =>
+  (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {} })).data;
+
+export const fetchAlertStats = async (): Promise<AlertStats> =>
+  (await api.get<AlertStats>('/alerts/stats')).data;
+
+export const fetchIncidents = async (): Promise<Incident[]> =>
+  (await api.get<Incident[]>('/alerts/incidents')).data;
+
+export const acknowledgeAlert = async (id: string): Promise<Alert> =>
+  (await api.post<Alert>(`/alerts/${id}/acknowledge`)).data;
+
+export const resolveAlert = async (id: string): Promise<Alert> =>
+  (await api.post<Alert>(`/alerts/${id}/resolve`)).data;
+
+export const createIncident = async (alertIds: string[], title?: string): Promise<Incident> =>
+  (await api.post<Incident>('/alerts/incidents', { alert_ids: alertIds, title })).data;
+
+export const fetchModelInfo = async (): Promise<ModelInfo> =>
+  (await api.get<ModelInfo>('/malware/model')).data;

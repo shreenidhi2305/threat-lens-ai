@@ -51,7 +51,7 @@ class FileAnalysisService:
             suspicious_strings=assessment['suspicious_strings'],
             strings_sample=strings_sample,
             risk=RiskAssessment(**assessment['risk']),
-            notes=['Static analysis only. Uploaded files are never executed.'],
+            notes=['Static analysis and ML inference only. Uploaded files are never executed.'],
         )
 
 

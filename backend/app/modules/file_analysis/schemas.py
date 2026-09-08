@@ -72,6 +72,7 @@ class MLPrediction(BaseModel):
     """Output of the ML prediction service."""
 
     available: bool
+    applicable: bool = False
     malicious: bool | None = None
     malware_probability: float | None = Field(default=None, ge=0, le=1)
     category: str | None = None
