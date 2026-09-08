@@ -28,7 +28,7 @@ export function ReportPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <p className="text-sm text-secondary">
-          Static analysis of{' '}
+          Analysis of{' '}
           <span className="font-mono text-text">
             {result.object_path.split('/').pop() || result.object_path}
           </span>

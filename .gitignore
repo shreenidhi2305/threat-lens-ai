@@ -19,6 +19,9 @@ frontend/dist/
 # Local uploaded samples (dev storage backend)
 backend/var/
 
+# ML training feature cache (rebuildable from fetch_dikedataset.py)
+backend/app/ml/training/.cache/
+
 # OS / IDE
 .DS_Store
 .vscode/

@@ -113,7 +113,7 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="border-t border-line-soft px-5 py-3 text-2xs text-muted">
-          Static analysis only. Files are never executed.
+          Static analysis + ML. Files are never executed.
         </div>
       </aside>
 
