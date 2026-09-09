@@ -9,9 +9,10 @@ from __future__ import annotations
 import uuid
 from collections import Counter, deque
 from datetime import datetime, timedelta, timezone
-
+from app.core.config import settings
 from app.modules.file_analysis.schemas import AnalysisResult
 from app.modules.threat_monitoring.schemas import Detection, ThreatSnapshot
+from app.db.repositories.detections import DetectionRepository
 
 _MAX_LOG = 2000
 
@@ -19,6 +20,7 @@ _MAX_LOG = 2000
 class ThreatMonitoringService:
     def __init__(self) -> None:
         self._log: deque[Detection] = deque(maxlen=_MAX_LOG)
+        self._repository = DetectionRepository()
 
     def record(self, result: AnalysisResult, actor: str | None = None) -> Detection:
         v = result.verdict
@@ -41,12 +43,69 @@ class ThreatMonitoringService:
             analyst=actor,
         )
         self._log.appendleft(detection)
-        return detection
+            
 
-    def list_detections(self, limit: int = 100, level: str | None = None) -> list[Detection]:
+        if settings.supabase_configured:
+            try:
+                self._repository.create(
+                    {
+                        "id": detection.id,
+                        "sha256": detection.sha256,
+                        "filename": detection.filename,
+                        "verdict_label": detection.verdict_label,
+                        "score": detection.score,
+                        "level": detection.level,
+                        "family": detection.family,
+                        "ml_probability": detection.ml_probability,
+                        "ml_category": detection.ml_category,
+                        "yara_rule_count": detection.yara_rule_count,
+                        "signature": detection.signature,
+                        "model_version": detection.model_version,
+                        "agreement": detection.agreement,
+                        "analyst_id": detection.analyst,
+                        "created_at": detection.at,
+                    }
+                )
+            except Exception:
+                # Keep the detection in memory if Supabase fails.
+                pass
+
+        return detection
+        
+
+    def list_detections(
+    self,
+    limit: int = 100,
+    level: str | None = None,
+) -> list[Detection]:
+        if settings.supabase_configured:
+            try:
+                rows = self._repository.list(limit=limit, level=level)
+
+                detections = []
+                for row in rows:
+                    row = dict(row)
+
+                # Map database column names to Detection model fields.
+                    if "created_at" in row:
+                        row["at"] = row.pop("created_at")
+
+                    if "analyst_id" in row:
+                        row["analyst"] = row.pop("analyst_id")
+
+                    detections.append(Detection.model_validate(row))
+
+                return detections
+
+            except Exception:
+            # Fall back to the in-memory log if Supabase is unavailable.
+                pass
+
         items = list(self._log)
+
         if level:
             items = [d for d in items if d.level == level]
+
         return items[:limit]
 
     def get_snapshot(self, open_alerts: int = 0) -> ThreatSnapshot:
