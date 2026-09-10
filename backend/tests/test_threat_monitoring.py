@@ -194,3 +194,66 @@ def test_list_detections_maps_supabase_fields(monkeypatch):
     assert detections[0].analyst is None
     assert detections[0].filename == "suspicious.exe"
     assert detections[0].level == "medium"
+
+def test_snapshot_reads_persistent_detections(monkeypatch):
+    service = ThreatMonitoringService()
+
+    monkeypatch.setattr(
+        "app.modules.threat_monitoring.service.settings",
+        SimpleNamespace(supabase_configured=True),
+    )
+
+    fake_rows = [
+        {
+            "id": "detection-1",
+            "created_at": "2026-09-09T10:00:00+00:00",
+            "sha256": "abc123",
+            "filename": "malware.exe",
+            "verdict_label": "malicious",
+            "score": 95,
+            "level": "high",
+            "family": "Test Malware",
+            "ml_probability": 0.98,
+            "ml_category": "Trojan",
+            "yara_rule_count": 2,
+            "signature": None,
+            "model_version": "test-model",
+            "agreement": "agree",
+            "analyst_id": None,
+        },
+        {
+            "id": "detection-2",
+            "created_at": "2026-09-09T11:00:00+00:00",
+            "sha256": "def456",
+            "filename": "clean.txt",
+            "verdict_label": "benign",
+            "score": 0,
+            "level": "low",
+            "family": None,
+            "ml_probability": None,
+            "ml_category": None,
+            "yara_rule_count": 0,
+            "signature": None,
+            "model_version": None,
+            "agreement": None,
+            "analyst_id": None,
+        },
+    ]
+
+    monkeypatch.setattr(
+        service._repository,
+        "list",
+        lambda limit=2000, level=None: fake_rows,
+    )
+
+    snapshot = service.get_snapshot(open_alerts=2)
+
+    assert snapshot.total_detections == 2
+    assert snapshot.malicious == 1
+    assert snapshot.suspicious == 0
+    assert snapshot.benign == 1
+    assert snapshot.open_alerts == 2
+    assert snapshot.last_24h == 2
+    assert snapshot.top_families == [
+        {"family": "Test Malware", "count": 1}
+    ]

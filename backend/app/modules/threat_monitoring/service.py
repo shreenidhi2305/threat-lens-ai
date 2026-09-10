@@ -110,17 +110,57 @@ class ThreatMonitoringService:
 
     def get_snapshot(self, open_alerts: int = 0) -> ThreatSnapshot:
         items = list(self._log)
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
-        families = Counter(d.family for d in items if d.family and d.verdict_label == 'malicious')
-        return ThreatSnapshot(
-            total_detections=len(items),
-            malicious=sum(1 for d in items if d.verdict_label == 'malicious'),
-            suspicious=sum(1 for d in items if d.verdict_label == 'suspicious'),
-            benign=sum(1 for d in items if d.verdict_label == 'benign'),
-            open_alerts=open_alerts,
-            last_24h=sum(1 for d in items if d.at >= cutoff),
-            top_families=[{'family': f, 'count': c} for f, c in families.most_common(6)],
-        )
 
+        if settings.supabase_configured:
+            try:
+                rows = self._repository.list(limit=_MAX_LOG)
+
+                persistent_items = []
+
+                for row in rows:
+                    row = dict(row)
+
+                    if "created_at" in row:
+                        row["at"] = row.pop("created_at")
+
+                    if "analyst_id" in row:
+                        row["analyst"] = row.pop("analyst_id")
+
+                    persistent_items.append(Detection.model_validate(row))
+
+                items = persistent_items
+
+            except Exception:
+            # Fall back to the in-memory log if Supabase is unavailable.
+                pass
+
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+
+        families = Counter(
+        d.family
+        for d in items
+        if d.family and d.verdict_label == "malicious"
+    )
+
+        return ThreatSnapshot(
+        total_detections=len(items),
+        malicious=sum(
+            1 for d in items if d.verdict_label == "malicious"
+        ),
+        suspicious=sum(
+            1 for d in items if d.verdict_label == "suspicious"
+        ),
+        benign=sum(
+            1 for d in items if d.verdict_label == "benign"
+        ),
+        open_alerts=open_alerts,
+        last_24h=sum(
+            1 for d in items if d.at >= cutoff
+        ),
+        top_families=[
+            {"family": f, "count": c}
+            for f, c in families.most_common(6)
+        ],
+    )
 
 threat_monitoring_service = ThreatMonitoringService()
