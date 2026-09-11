@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from app.modules.threat_monitoring.service import ThreatMonitoringService
@@ -7,6 +8,8 @@ from app.modules.threat_monitoring.service import ThreatMonitoringService
 from fastapi.testclient import TestClient
 
 from app.main import app
+
+_NOW = datetime.now(timezone.utc).isoformat()
 
 client = TestClient(app)
 def test_record_keeps_detection_when_supabase_fails(monkeypatch):
@@ -92,7 +95,9 @@ def test_list_detections_reads_from_supabase(monkeypatch):
     ]
 
     def fake_list(limit=100, level=None):
-        assert limit == 100
+        # The service fetches the full window (so client-side family/verdict/q
+        # filters have the whole dataset to work with) and slices afterwards.
+        assert limit == 2000
         assert level is None
         return fake_rows
 
@@ -131,7 +136,7 @@ def test_detections_endpoint_returns_detection_history(monkeypatch):
 
     monkeypatch.setattr(
         "app.modules.threat_monitoring.router.threat_monitoring_service.list_detections",
-        lambda limit=100, level=None: [fake_detection],
+        lambda limit=100, level=None, verdict=None, family=None, q=None: [fake_detection],
     )
 
     response = client.get(
@@ -206,7 +211,7 @@ def test_snapshot_reads_persistent_detections(monkeypatch):
     fake_rows = [
         {
             "id": "detection-1",
-            "created_at": "2026-09-09T10:00:00+00:00",
+            "created_at": _NOW,
             "sha256": "abc123",
             "filename": "malware.exe",
             "verdict_label": "malicious",
@@ -223,7 +228,7 @@ def test_snapshot_reads_persistent_detections(monkeypatch):
         },
         {
             "id": "detection-2",
-            "created_at": "2026-09-09T11:00:00+00:00",
+            "created_at": _NOW,
             "sha256": "def456",
             "filename": "clean.txt",
             "verdict_label": "benign",

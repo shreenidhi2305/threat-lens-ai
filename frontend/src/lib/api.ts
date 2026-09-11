@@ -8,8 +8,17 @@ import type {
   Incident,
   ModelInfo,
   ThreatSnapshot,
+  ThreatStats,
+  TimelineBucket,
   UserProfile,
 } from './types';
+
+export interface DetectionFilters {
+  level?: string;
+  verdict?: string;
+  family?: string;
+  q?: string;
+}
 
 const TOKEN_KEY = 'threatlens.token';
 
@@ -63,8 +72,24 @@ export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob>
 export const fetchThreatSnapshot = async (): Promise<ThreatSnapshot> =>
   (await api.get<ThreatSnapshot>('/threats/snapshot')).data;
 
-export const fetchDetections = async (limit = 100): Promise<Detection[]> =>
-  (await api.get<Detection[]>('/threats/detections', { params: { limit } })).data;
+export const fetchDetections = async (
+  limit = 100,
+  filters: DetectionFilters = {},
+): Promise<Detection[]> =>
+  (
+    await api.get<Detection[]>('/threats/detections', {
+      params: { limit, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
+    })
+  ).data;
+
+export const fetchThreatTimeline = async (window: string = '24h'): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/threats/timeline', { params: { window } })).data;
+
+export const fetchThreatStats = async (): Promise<ThreatStats> =>
+  (await api.get<ThreatStats>('/threats/stats')).data;
+
+export const fetchThreatFamilies = async (): Promise<string[]> =>
+  (await api.get<string[]>('/threats/families')).data;
 
 export const fetchAlerts = async (status?: string): Promise<Alert[]> =>
   (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {} })).data;

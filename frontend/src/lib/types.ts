@@ -123,6 +123,32 @@ export interface Detection {
   signature: string | null;
   model_version: string | null;
   agreement: Agreement | null;
+  analyst: string | null;
+}
+
+export interface TimelineBucket {
+  bucket: string;
+  label: string;
+  total: number;
+  malicious: number;
+  suspicious: number;
+  benign: number;
+}
+
+export interface ThreatStats {
+  total_detections: number;
+  malicious: number;
+  suspicious: number;
+  benign: number;
+  open_alerts: number;
+  last_24h: number;
+  detection_rate: number;
+  by_level: Record<string, number>;
+  by_verdict: Record<string, number>;
+  by_agreement: Record<string, number>;
+  by_family: { family: string; count: number }[];
+  ml_only_catches: number;
+  top_families: { family: string; count: number }[];
 }
 
 export interface ThreatSnapshot {

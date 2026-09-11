@@ -31,3 +31,32 @@ class ThreatSnapshot(BaseModel):
     open_alerts: int
     last_24h: int
     top_families: list[dict[str, object]] = []
+
+
+class TimelineBucket(BaseModel):
+    """One aggregated bucket for the threat-activity timeline."""
+
+    bucket: datetime
+    label: str
+    total: int = 0
+    malicious: int = 0
+    suspicious: int = 0
+    benign: int = 0
+
+
+class ThreatStats(BaseModel):
+    """Richer aggregation backing the threat-tracking dashboard widgets."""
+
+    total_detections: int
+    malicious: int
+    suspicious: int
+    benign: int
+    open_alerts: int
+    last_24h: int
+    detection_rate: float = 0.0
+    by_level: dict[str, int] = {}
+    by_verdict: dict[str, int] = {}
+    by_agreement: dict[str, int] = {}
+    by_family: list[dict[str, object]] = []
+    ml_only_catches: int = 0
+    top_families: list[dict[str, object]] = []
