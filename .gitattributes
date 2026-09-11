@@ -1,1 +1,1 @@
-backend/app/ml/models/artifacts/*.txt -text
+backend/app/ml/models/artifacts/*.txt -text -diff

@@ -1,5 +1,5 @@
 import type { AnalysisResult, Agreement, MLPrediction, RiskLevel } from '../lib/types';
-import { AlertTriangleIcon, CodeIcon, FingerprintIcon, GlobeIcon, RadarIcon } from '../ui/icons';
+import { AlertTriangleIcon, FingerprintIcon, GlobeIcon, RadarIcon } from '../ui/icons';
 import { Badge, CopyButton, InfoRow, Panel, RiskMeter, SectionLabel } from '../ui/primitives';
 
 const LEVEL_WASH: Record<RiskLevel, string> = {
@@ -76,21 +76,29 @@ function MLPanel({ ml }: { ml: MLPrediction | null }) {
             Model is trained on Windows PE files; for this file type the rule engine is authoritative.
           </p>
         )}
-        {ml.applicable && ml.malicious && ml.top_categories.length > 0 && (
+        {ml.applicable && ml.malicious ? (
           <div>
-            <div className="mb-1 text-2xs uppercase tracking-[0.06em] text-muted">category</div>
-            <div className="flex flex-wrap gap-1.5">
-              {ml.top_categories.slice(0, 3).map((c) => (
-                <span
-                  key={c.category}
-                  className="rounded bg-surface-raised px-1.5 py-0.5 text-2xs text-secondary"
-                >
-                  {c.category} {(c.probability * 100).toFixed(0)}%
-                </span>
-              ))}
-            </div>
+            <div className="mb-1 text-2xs uppercase tracking-[0.06em] text-muted">ML classification</div>
+            {ml.top_categories.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {ml.top_categories.slice(0, 3).map((c) => (
+                  <span
+                    key={c.category}
+                    className="rounded bg-surface-raised px-1.5 py-0.5 text-2xs text-secondary"
+                  >
+                    {c.category} {(c.probability * 100).toFixed(0)}%
+                  </span>
+                ))}
+              </div>
+            ) : <p className="text-sm text-secondary">ML malware detected; no category probabilities available.</p>}
           </div>
-        )}
+        ) : ml.applicable ? (
+          <div>
+            <div className="mb-1 text-2xs uppercase tracking-[0.06em] text-muted">ML classification</div>
+            <div className="text-lg font-semibold text-text">Benign</div>
+            <p className="text-xs text-secondary">The ML detector did not classify this sample as malware.</p>
+          </div>
+        ) : null}
       </div>
     </Panel>
   );
@@ -105,6 +113,16 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
   const action = v?.recommended_action ?? risk.recommended_action;
   const filename = result.object_path.split('/').pop() || result.object_path;
   const iocCount = net.urls.length + net.ips.length + net.domains.length;
+  const yaraFamilies = Array.from(new Set(yara_matches
+    .map((match) => match.meta.family)
+    .filter((family): family is string => typeof family === 'string' && family.length > 0)));
+  const ruleFamilies = Array.from(new Set([
+    ...(sig.matched && sig.type ? [sig.type] : []),
+    ...yaraFamilies,
+  ]));
+  const ruleEvidence = risk.level !== 'low' || sig.matched || yara_matches.length > 0 || result.suspicious_indicators.length > 0;
+  const mlBenign = Boolean(ml?.available && ml?.applicable && ml.malicious === false);
+  const elevatedByRules = Boolean(mlBenign && ruleEvidence && v && v.label !== 'benign');
 
   return (
     <div className="space-y-6">
@@ -145,6 +163,11 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
                 <span className="text-muted">— {AGREEMENT_COPY[v.agreement]}</span>
               </div>
             )}
+            {elevatedByRules && (
+              <p className="mt-3 rounded border border-risk-medium/30 bg-risk-medium-wash px-3 py-2 text-xs text-secondary">
+                ML classified the sample as benign; the final verdict was elevated due to rule/YARA evidence.
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
               <span className="font-mono text-secondary">{filename}</span>
               <span>·</span>
@@ -172,9 +195,8 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
             {result.suspicious_indicators.map((ind, i) => (
               <li key={i} className="flex gap-3 px-4 py-2.5 text-sm">
                 <span
-                  className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
-                    level === 'high' ? 'bg-risk-high' : level === 'medium' ? 'bg-risk-medium' : 'bg-risk-low'
-                  }`}
+                  className={`mt-1.5 size-1.5 shrink-0 rounded-full ${level === 'high' ? 'bg-risk-high' : level === 'medium' ? 'bg-risk-medium' : 'bg-risk-low'
+                    }`}
                 />
                 <span className="text-text">{ind}</span>
               </li>
@@ -219,9 +241,12 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
                       <span className="break-all font-mono text-xs text-text">{m.rule}</span>
                       <Badge tone={yaraSeverity(m)}>{String(m.meta.severity ?? 'n/a')}</Badge>
                     </div>
-                    {typeof m.meta.description === 'string' && (
-                      <p className="mt-1 text-xs text-secondary">{m.meta.description}</p>
-                    )}
+                    <div className="mt-1 space-y-0.5 text-xs text-secondary">
+                      {m.tags.length > 0 && <p>Tags: {m.tags.join(', ')}</p>}
+                      {typeof m.meta.family === 'string' && <p>Family: {m.meta.family}</p>}
+                      {typeof m.meta.mitre === 'string' && <p>MITRE: {m.meta.mitre}</p>}
+                      {typeof m.meta.description === 'string' && <p>{m.meta.description}</p>}
+                    </div>
                     {m.matched_strings.length > 0 && (
                       <p className="mt-1 line-clamp-2 break-all font-mono text-2xs text-muted">
                         {m.matched_strings.join('  ·  ')}
@@ -231,6 +256,40 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
                 ))}
               </ul>
             )}
+          </Panel>
+        </div>
+      </div>
+
+      {/* classification */}
+      <div>
+        <SectionLabel>Classification Sources</SectionLabel>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Panel title="ML classification" aside={<RadarIcon className="text-muted" />}>
+            {ml?.available && ml.category ? (
+              <div className="space-y-2">
+                <div className="text-lg font-semibold text-text">{ml.category}</div>
+                <p className="text-xs text-secondary">
+                  Category inferred by the pretrained ML classifier.
+                </p>
+                {ml.category_confidence != null && (
+                  <InfoRow label="Category confidence" value={`${(ml.category_confidence * 100).toFixed(1)}%`} />
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-secondary">No ML category is available for this result.</p>
+            )}
+          </Panel>
+          <Panel title="Rule/YARA family" aside={<FingerprintIcon className="text-muted" />}>
+            <div className="space-y-2">
+              <div className="text-lg font-semibold text-text">
+                {ruleFamilies.length > 0 ? ruleFamilies.join(', ') : 'No family identified'}
+              </div>
+              <p className="text-xs text-secondary">
+                Derived from hash signatures and YARA metadata, independent of ML classification.
+              </p>
+              {sig.matched && <InfoRow label="Signature evidence" value={sig.name ?? 'Known signature'} mono />}
+              {yara_matches.length > 0 && <InfoRow label="YARA evidence" value={`${yara_matches.length} matched rule${yara_matches.length === 1 ? '' : 's'}`} />}
+            </div>
           </Panel>
         </div>
       </div>
@@ -306,22 +365,6 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
           )}
         </Panel>
       </div>
-
-      {/* strings */}
-      {result.strings_sample.length > 0 && (
-        <details className="group rounded-lg border border-line bg-surface">
-          <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-2xs font-semibold uppercase tracking-[0.08em] text-muted marker:content-['']">
-            <CodeIcon />
-            Extracted strings
-            <span className="font-normal normal-case tracking-normal text-muted">
-              ({result.strings_sample.length} shown)
-            </span>
-          </summary>
-          <pre className="max-h-72 overflow-auto border-t border-line-soft px-4 py-3 font-mono text-2xs leading-relaxed text-secondary">
-            {result.strings_sample.join('\n')}
-          </pre>
-        </details>
-      )}
 
       <p className="text-2xs text-muted">{result.notes.join(' ')}</p>
     </div>

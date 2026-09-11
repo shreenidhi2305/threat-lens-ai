@@ -44,6 +44,13 @@ export const UploadIcon = (p: IconProps) => (
   </Base>
 );
 
+export const DownloadIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 4v11m0 0l-4-4m4 4l4-4" />
+    <path d="M5 19h14" />
+  </Base>
+);
+
 export const FileScanIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" />
