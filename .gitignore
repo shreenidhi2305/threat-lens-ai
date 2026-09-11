@@ -1,0 +1,28 @@
+# Node
+node_modules/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Env
+.env
+*.env.local
+
+# Build
+frontend/dist/
+*.zip
+
+# Local uploaded samples (dev storage backend)
+backend/var/
+
+# ML training feature cache (rebuildable from fetch_dikedataset.py)
+backend/app/ml/training/.cache/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
