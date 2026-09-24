@@ -195,6 +195,43 @@ export interface Incident {
   alert_ids: string[];
 }
 
+export type NotificationCategory = 'alert' | 'status' | 'incident' | 'report';
+
+export interface AppNotification {
+  id: string;
+  created_at: string;
+  category: NotificationCategory;
+  severity: string;
+  title: string;
+  message: string;
+  alert_id: string | null;
+  incident_id: string | null;
+  report_id: string | null;
+  read: boolean;
+  email_sent: boolean;
+}
+
+export interface NotificationCounts {
+  unread: number;
+  total: number;
+}
+
+export type ReportType = 'investigation' | 'summary';
+
+export interface ReportRecord {
+  id: string;
+  created_at: string;
+  report_type: ReportType;
+  format: string;
+  title: string;
+  created_by: string | null;
+  sha256: string | null;
+  filename: string | null;
+  verdict_label: string | null;
+  risk_score: number | null;
+  window: string | null;
+}
+
 export interface ModelInfo {
   detector: {
     version: string;

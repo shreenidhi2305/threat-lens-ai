@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.modules.alerts.notifications import send_email
 from app.modules.alerts.schemas import Alert, AlertStats, Incident
 from app.modules.file_analysis.schemas import AnalysisResult
+from app.modules.notifications.service import notifications_service
 
 _LEVEL_RANK = {'low': 0, 'medium': 1, 'high': 2}
 _MAX_ALERTS = 1000
@@ -61,6 +62,14 @@ class AlertsService:
         self._alerts[alert.id] = alert
         while len(self._alerts) > _MAX_ALERTS:
             self._alerts.popitem(last=False)
+        notifications_service.notify(
+            category='alert',
+            severity=severity,
+            title=f'{severity.capitalize()} alert: {alert.title}',
+            message=f'{alert.sample_name} — verdict {alert.verdict_label} ({alert.verdict_score}/100)',
+            alert_id=alert.id,
+            email_sent=alert.notified,
+        )
         return alert
 
     # --- queries ----------------------------------------------------------
@@ -91,6 +100,13 @@ class AlertsService:
         alert.status = status
         if note:
             alert.note = note
+        notifications_service.notify(
+            category='status',
+            severity='info',
+            title=f'Alert {status}',
+            message=f'{alert.title} ({alert.sample_name}) marked {status}' + (f' — {note}' if note else ''),
+            alert_id=alert.id,
+        )
         return alert
 
     # --- incidents ------------------------------------------------------
@@ -112,6 +128,13 @@ class AlertsService:
             a.incident_id = incident.id
             if a.status == 'open':
                 a.status = 'acknowledged'
+        notifications_service.notify(
+            category='incident',
+            severity=incident.severity,
+            title=f'Incident opened: {incident.title}',
+            message=f'{len(linked)} alert(s) grouped into this incident',
+            incident_id=incident.id,
+        )
         return incident
 
     def list_incidents(self) -> list[Incident]:

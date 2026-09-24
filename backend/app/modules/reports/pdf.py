@@ -24,6 +24,35 @@ from reportlab.platypus import (
 from app.modules.file_analysis.schemas import AnalysisResult
 
 
+def _build_styles() -> dict[str, ParagraphStyle]:
+    base_styles = getSampleStyleSheet()
+    return {
+        'title': ParagraphStyle('ReportTitle', parent=base_styles['Title'], fontName='Helvetica-Bold', fontSize=20, leading=24, textColor=colors.HexColor('#17343b'), spaceAfter=3 * mm),
+        'subtitle': ParagraphStyle('ReportSubtitle', parent=base_styles['Normal'], fontSize=9, textColor=colors.HexColor('#557078'), spaceAfter=7 * mm),
+        'heading': ParagraphStyle('ReportHeading', parent=base_styles['Heading2'], fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor('#17343b'), spaceBefore=5 * mm, spaceAfter=3 * mm),
+        'subheading': ParagraphStyle('ReportSubheading', parent=base_styles['Heading3'], fontName='Helvetica-Bold', fontSize=10, leading=13, textColor=colors.HexColor('#31545c'), spaceBefore=2 * mm, spaceAfter=2 * mm),
+        'label': ParagraphStyle('ReportLabel', parent=base_styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor('#31545c')),
+        'body': ParagraphStyle('ReportBody', parent=base_styles['Normal'], fontSize=8.5, leading=11, textColor=colors.HexColor('#24363b'), wordWrap='CJK'),
+        'small': ParagraphStyle('ReportSmall', parent=base_styles['Normal'], fontSize=7.5, leading=9, textColor=colors.HexColor('#557078')),
+    }
+
+
+def _new_document(buffer: io.BytesIO, footer_label: str, pdf_title: str) -> BaseDocTemplate:
+    frame = Frame(15 * mm, 15 * mm, 180 * mm, 267 * mm, id='normal')
+
+    def footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 7.5)
+        canvas.setFillColor(colors.HexColor('#6b7f84'))
+        canvas.drawString(15 * mm, 9 * mm, footer_label)
+        canvas.drawRightString(195 * mm, 9 * mm, f'Page {doc.page}')
+        canvas.restoreState()
+
+    doc = BaseDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm, title=pdf_title)
+    doc.addPageTemplates([PageTemplate(id='report', frames=frame, onPage=footer)])
+    return doc
+
+
 def _text(value: object, fallback: str = 'Not available') -> str:
     if value is None or value == '':
         return fallback
@@ -68,30 +97,8 @@ def _list_block(title: str, values: list[object], styles: dict[str, ParagraphSty
 def render_analysis_pdf(result: AnalysisResult) -> bytes:
     """Render an AnalysisResult without reading or storing the uploaded file."""
     buffer = io.BytesIO()
-    base_styles = getSampleStyleSheet()
-    custom_styles = {
-        'title': ParagraphStyle('ReportTitle', parent=base_styles['Title'], fontName='Helvetica-Bold', fontSize=20, leading=24, textColor=colors.HexColor('#17343b'), spaceAfter=3 * mm),
-        'subtitle': ParagraphStyle('ReportSubtitle', parent=base_styles['Normal'], fontSize=9, textColor=colors.HexColor('#557078'), spaceAfter=7 * mm),
-        'heading': ParagraphStyle('ReportHeading', parent=base_styles['Heading2'], fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor('#17343b'), spaceBefore=5 * mm, spaceAfter=3 * mm),
-        'subheading': ParagraphStyle('ReportSubheading', parent=base_styles['Heading3'], fontName='Helvetica-Bold', fontSize=10, leading=13, textColor=colors.HexColor('#31545c'), spaceBefore=2 * mm, spaceAfter=2 * mm),
-        'label': ParagraphStyle('ReportLabel', parent=base_styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor('#31545c')),
-        'body': ParagraphStyle('ReportBody', parent=base_styles['Normal'], fontSize=8.5, leading=11, textColor=colors.HexColor('#24363b'), wordWrap='CJK'),
-        'small': ParagraphStyle('ReportSmall', parent=base_styles['Normal'], fontSize=7.5, leading=9, textColor=colors.HexColor('#557078')),
-    }
-    styles = custom_styles
-
-    frame = Frame(15 * mm, 15 * mm, 180 * mm, 267 * mm, id='normal')
-
-    def footer(canvas, doc):
-        canvas.saveState()
-        canvas.setFont('Helvetica', 7.5)
-        canvas.setFillColor(colors.HexColor('#6b7f84'))
-        canvas.drawString(15 * mm, 9 * mm, 'ThreatLens AI | Static malware analysis report')
-        canvas.drawRightString(195 * mm, 9 * mm, f'Page {doc.page}')
-        canvas.restoreState()
-
-    doc = BaseDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm, title='ThreatLens AI Analysis Report')
-    doc.addPageTemplates([PageTemplate(id='report', frames=frame, onPage=footer)])
+    styles = _build_styles()
+    doc = _new_document(buffer, 'ThreatLens AI | Static malware analysis report', 'ThreatLens AI Analysis Report')
 
     metadata = result.metadata
     hashes = result.hashes
@@ -197,6 +204,66 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
     if result.notes:
         story.append(Paragraph('Analysis Notes', styles['heading']))
         story.extend(_list_block('Notes', result.notes, styles))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+_WINDOW_LABELS = {'24h': 'Last 24 hours', '7d': 'Last 7 days', '30d': 'Last 30 days'}
+
+
+def render_summary_pdf(
+    stats: dict,
+    timeline: list[dict],
+    window: str,
+    generated_by: str | None = None,
+) -> bytes:
+    """Render an aggregate threat-monitoring / operational summary report."""
+    buffer = io.BytesIO()
+    styles = _build_styles()
+    doc = _new_document(buffer, 'ThreatLens AI | Threat monitoring summary report', 'ThreatLens AI Threat Summary Report')
+
+    period = _WINDOW_LABELS.get(window, window)
+    story: list[object] = [
+        Paragraph('ThreatLens AI', styles['title']),
+        Paragraph(
+            f'Threat monitoring summary | {period} | '
+            f'{datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}'
+            + (f' | Generated by {_text(generated_by)}' if generated_by else ''),
+            styles['subtitle'],
+        ),
+        Paragraph('Detection Overview', styles['heading']),
+        _rows([
+            ('Total detections', stats.get('total_detections')),
+            ('Malicious', stats.get('malicious')),
+            ('Suspicious', stats.get('suspicious')),
+            ('Benign', stats.get('benign')),
+            ('Detections in last 24h', stats.get('last_24h')),
+            ('Detection rate', f"{stats.get('detection_rate', 0):.1%}" if stats.get('detection_rate') is not None else None),
+            ('Open alerts', stats.get('open_alerts')),
+            ('ML-only catches', stats.get('ml_only_catches')),
+        ], styles),
+        Paragraph('Breakdown by Risk Level', styles['heading']),
+        _rows(list((stats.get('by_level') or {}).items()) or [('No data', 'Not available')], styles),
+        Paragraph('Breakdown by Engine Agreement', styles['heading']),
+        _rows(list((stats.get('by_agreement') or {}).items()) or [('No data', 'Not available')], styles),
+        Paragraph('Top Malware Families', styles['heading']),
+    ]
+
+    top_families = stats.get('top_families') or []
+    if top_families:
+        story.append(_rows([(f['family'], f['count']) for f in top_families], styles))
+    else:
+        story.append(Paragraph('No malicious detections recorded in this period.', styles['body']))
+
+    story.append(Paragraph(f'Activity Timeline ({period})', styles['heading']))
+    if timeline:
+        story.append(_rows(
+            [(b['label'], f"{b['total']} total — {b['malicious']} malicious, {b['suspicious']} suspicious") for b in timeline],
+            styles,
+        ))
+    else:
+        story.append(Paragraph('No timeline data available.', styles['body']))
 
     doc.build(story)
     return buffer.getvalue()
