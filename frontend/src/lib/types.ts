@@ -232,6 +232,28 @@ export interface ReportRecord {
   window: string | null;
 }
 
+export interface AnalyticsSummary {
+  total_samples: number;
+  classified_samples: number;
+  malicious: number;
+  suspicious: number;
+  benign: number;
+  detection_rate: number;
+  last_24h: number;
+  avg_risk_score: number;
+  by_level: Record<string, number>;
+  by_verdict: Record<string, number>;
+  by_agreement: Record<string, number>;
+  top_families: { family: string; count: number }[];
+  ml_only_catches: number;
+  open_alerts: number;
+  critical_alerts: number;
+  reports_generated: number;
+  detector_version: string | null;
+  classifier_version: string | null;
+  generated_at: string;
+}
+
 export interface ModelInfo {
   detector: {
     version: string;

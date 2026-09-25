@@ -4,6 +4,7 @@ import type {
   Alert,
   AlertStats,
   AnalysisResult,
+  AnalyticsSummary,
   AppNotification,
   Detection,
   Incident,
@@ -114,6 +115,14 @@ export const createIncident = async (alertIds: string[], title?: string): Promis
 
 export const fetchModelInfo = async (): Promise<ModelInfo> =>
   (await api.get<ModelInfo>('/malware/model')).data;
+
+// --- Analytics dashboard ---------------------------------------------------
+
+export const fetchAnalyticsSummary = async (): Promise<AnalyticsSummary> =>
+  (await api.get<AnalyticsSummary>('/analytics/summary')).data;
+
+export const fetchAnalyticsTimeline = async (window: string = '7d'): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/analytics/timeline', { params: { window } })).data;
 
 // --- Milestone 3: notification and reporting workflows --------------------
 
