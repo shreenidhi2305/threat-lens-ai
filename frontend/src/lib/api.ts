@@ -4,9 +4,13 @@ import type {
   Alert,
   AlertStats,
   AnalysisResult,
+  AnalyticsSummary,
+  AppNotification,
   Detection,
   Incident,
   ModelInfo,
+  NotificationCounts,
+  ReportRecord,
   ThreatSnapshot,
   ThreatStats,
   TimelineBucket,
@@ -135,3 +139,35 @@ export const createIncident = async (alertIds: string[], title?: string): Promis
 
 export const fetchModelInfo = async (): Promise<ModelInfo> =>
   (await api.get<ModelInfo>('/malware/model')).data;
+
+// --- Analytics dashboard ---------------------------------------------------
+
+export const fetchAnalyticsSummary = async (): Promise<AnalyticsSummary> =>
+  (await api.get<AnalyticsSummary>('/analytics/summary')).data;
+
+export const fetchAnalyticsTimeline = async (window: string = '7d'): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/analytics/timeline', { params: { window } })).data;
+
+// --- Milestone 3: notification and reporting workflows --------------------
+
+export const fetchNotifications = async (unreadOnly = false, limit = 50): Promise<AppNotification[]> =>
+  (
+    await api.get<AppNotification[]>('/notifications/', {
+      params: { unread_only: unreadOnly, limit },
+    })
+  ).data;
+
+export const fetchUnreadCount = async (): Promise<NotificationCounts> =>
+  (await api.get<NotificationCounts>('/notifications/unread-count')).data;
+
+export const markNotificationRead = async (id: string): Promise<AppNotification> =>
+  (await api.post<AppNotification>(`/notifications/${id}/read`)).data;
+
+export const markAllNotificationsRead = async (): Promise<{ marked: number }> =>
+  (await api.post<{ marked: number }>('/notifications/read-all')).data;
+
+export const fetchReportHistory = async (limit = 50): Promise<ReportRecord[]> =>
+  (await api.get<ReportRecord[]>('/reports/history', { params: { limit } })).data;
+
+export const downloadSummaryReport = async (window: string = '7d'): Promise<Blob> =>
+  (await api.post('/reports/summary', null, { params: { window }, responseType: 'blob' })).data;

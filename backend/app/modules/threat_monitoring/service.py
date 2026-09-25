@@ -74,6 +74,10 @@ class ThreatMonitoringService:
             # Keep the detection in memory if Supabase is unavailable.
             pass
 
+    def all_detections(self) -> list[Detection]:
+        """Public accessor for the full detection set (used by the analytics module)."""
+        return self._all()
+
     def _all(self) -> list[Detection]:
         """The current dataset: Supabase-backed when configured, else in-memory."""
         if settings.supabase_configured:
