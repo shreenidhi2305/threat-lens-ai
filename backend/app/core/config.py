@@ -31,7 +31,11 @@ class Settings(BaseSettings):
     ALERT_EMAIL_FROM: str = 'threatlens@localhost'
     ALERT_EMAIL_TO: str = ''
 
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(
+    env_file='.env',
+    env_file_encoding='utf-8',
+    extra='ignore'
+)
 
     @property
     def cors_origins(self) -> list[str]:
