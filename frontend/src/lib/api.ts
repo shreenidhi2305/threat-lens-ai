@@ -91,6 +91,30 @@ export const fetchThreatStats = async (): Promise<ThreatStats> =>
 export const fetchThreatFamilies = async (): Promise<string[]> =>
   (await api.get<string[]>('/threats/families')).data;
 
+export interface ThreatReportParams extends DetectionFilters {
+  window: string;
+  threatsOnly: boolean;
+}
+
+export const downloadThreatReport = async (params: ThreatReportParams): Promise<Blob> =>
+  (
+    await api.get('/threats/report', {
+      responseType: 'blob',
+      params: {
+        window: params.window,
+        threats_only: params.threatsOnly,
+        ...Object.fromEntries(
+          Object.entries({
+            level: params.level,
+            verdict: params.verdict,
+            family: params.family,
+            q: params.q,
+          }).filter(([, value]) => value),
+        ),
+      },
+    })
+  ).data;
+
 export const fetchAlerts = async (status?: string): Promise<Alert[]> =>
   (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {} })).data;
 

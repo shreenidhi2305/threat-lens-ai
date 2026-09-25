@@ -1,12 +1,14 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
+import { useAuth } from '../auth/AuthContext';
 import {
+  downloadThreatReport,
   fetchDetections,
   fetchThreatFamilies,
   fetchThreatStats,
   fetchThreatTimeline,
 } from '../lib/api';
-import type { Detection, RiskLevel } from '../lib/types';
+import type { Detection, RiskLevel, UserRole } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
 import { RadarIcon } from '../ui/icons';
 import { Badge, EmptyState, Panel, Spinner, Stat } from '../ui/primitives';
@@ -48,12 +50,16 @@ function toCsv(rows: Detection[]): string {
   return [head.join(','), ...lines].join('\n');
 }
 
+const REPORT_ROLES: UserRole[] = ['Security Analyst', 'SOC Team Member', 'Administrator'];
+
 const selectCls =
   'rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-text outline-none focus:border-accent';
 const inputCls =
   'w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-muted outline-none focus:border-accent sm:w-56';
 
 export function ThreatsPage() {
+  const { user } = useAuth();
+  const canDownloadReport = user !== null && REPORT_ROLES.includes(user.role);
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [level, setLevel] = useState('');
@@ -62,6 +68,8 @@ export function ThreatsPage() {
   const [window, setWindow] = useState<WindowKey>('24h');
   const [threatsOnly, setThreatsOnly] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 350);
@@ -113,6 +121,36 @@ export function ThreatsPage() {
   const loading = stats.loading && detections.loading && timeline.loading;
   const error = stats.error ?? detections.error ?? timeline.error;
 
+  const downloadPdf = async (): Promise<void> => {
+    setPdfBusy(true);
+    setPdfError(null);
+    try {
+      const blob = await downloadThreatReport({
+        window,
+        threatsOnly,
+        level: level || undefined,
+        verdict: verdict || undefined,
+        family: family || undefined,
+        q: debouncedQ || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `threat-monitor-${window}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      globalThis.setTimeout(() => {
+        URL.revokeObjectURL(url);
+        link.remove();
+      }, 1000);
+    } catch {
+      setPdfError('The monitoring report could not be generated. Please try again.');
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   const exportCsv = (): void => {
     const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -139,7 +177,7 @@ export function ThreatsPage() {
             Real-time tracking of flagged files, families, and detection activity.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-2xs text-muted">Auto-refresh 15s</span>
           <button
             type="button"
@@ -156,8 +194,19 @@ export function ThreatsPage() {
           >
             Export CSV
           </button>
+          {canDownloadReport && (
+            <button
+              type="button"
+              onClick={() => void downloadPdf()}
+              disabled={pdfBusy}
+              className="rounded-md bg-text px-2.5 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50"
+            >
+              {pdfBusy ? 'Preparing PDF…' : 'Download PDF'}
+            </button>
+          )}
         </div>
       </div>
+      {pdfError && <p className="text-sm text-risk-high">{pdfError}</p>}
 
       {loading ? (
         <div className="flex justify-center py-16">
