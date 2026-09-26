@@ -125,6 +125,21 @@ export interface Detection {
   agreement: Agreement | null;
   analyst: string | null;
 }
+export interface Report {
+  report_id: string;
+  status: string;
+  filename: string | null;
+  sample_id: string | null;
+  file_hash: string | null;
+  predicted_class: string | null;
+  confidence: number | null;
+  is_malicious: boolean | null;
+  risk_score: number | null;
+  severity: string | null;
+  static_indicators: string[];
+  recommendation: string | null;
+  timestamp: string | null;
+}
 
 export interface TimelineBucket {
   bucket: string;

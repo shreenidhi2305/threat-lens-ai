@@ -26,6 +26,13 @@ def download_pdf(
         headers={'Content-Disposition': f'attachment; filename="{safe_name}-report.pdf"'},
     )
 
+@router.get('', response_model=list[ReportResponse])
+def list_reports(
+    _user: CurrentUser = Depends(
+        require_roles('Security Analyst', 'SOC Team Member', 'Administrator', 'Researcher')
+    ),
+) -> list[ReportResponse]:
+    return reports_service.list_reports()
 
 @router.get('/{report_id}', response_model=ReportResponse)
 def get_report_status(
@@ -35,3 +42,46 @@ def get_report_status(
     ),
 ) -> ReportResponse:
     return reports_service.get_report_status(report_id)
+@router.get('/{report_id}/pdf')
+def download_previous_pdf(
+    report_id: str,
+    _user: CurrentUser = Depends(
+        require_roles(
+            'Security Analyst',
+            'SOC Team Member',
+            'Administrator',
+            'Researcher',
+        )
+    ),
+) -> Response:
+    """Download the PDF for a previously generated report."""
+    analysis = reports_service.get_analysis(report_id)
+
+    if analysis is None:
+        return Response(
+            content='Report analysis not found',
+            status_code=404,
+            media_type='text/plain',
+        )
+
+    filename = (
+        getattr(analysis, 'object_path', 'analysis')
+        .replace('\\', '/')
+        .rsplit('/', 1)[-1]
+        or 'analysis'
+    )
+
+    safe_name = ''.join(
+        char if char.isalnum() or char in '._-' else '_'
+        for char in filename
+    )
+
+    return Response(
+        content=render_analysis_pdf(analysis),
+        media_type='application/pdf',
+        headers={
+            'Content-Disposition': (
+                f'attachment; filename="{safe_name}-report.pdf"'
+            )
+        },
+    )

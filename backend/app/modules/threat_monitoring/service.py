@@ -68,7 +68,7 @@ class ThreatMonitoringService:
                 'model_version': detection.model_version,
                 'agreement': detection.agreement,
                 'analyst_id': detection.analyst,
-                'created_at': detection.at,
+                'created_at': detection.at.isoformat(),
             })
         except Exception:
             # Keep the detection in memory if Supabase is unavailable.
