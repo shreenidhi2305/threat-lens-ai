@@ -7,6 +7,7 @@ import type {
   Detection,
   Incident,
   ModelInfo,
+  Report,
   ThreatSnapshot,
   ThreatStats,
   TimelineBucket,
@@ -64,8 +65,16 @@ export const uploadSample = async (file: File): Promise<AnalysisResult> => {
   return data;
 };
 
+
 export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob> =>
   (await api.post('/reports/pdf', result, { responseType: 'blob' })).data;
+
+//----Milestone-3
+export const fetchReports = async (): Promise<Report[]> =>
+  (await api.get<Report[]>('/reports')).data;
+
+export const downloadPreviousReport = async (reportId: string): Promise<Blob> =>
+  (await api.get(`/reports/${reportId}/pdf`, { responseType: 'blob' })).data;
 
 // --- Milestone 2: monitoring, alerts, model -------------------------------
 

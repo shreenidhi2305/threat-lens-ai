@@ -8,6 +8,7 @@ from html import escape
 from typing import Iterable
 
 from reportlab.lib import colors
+from reportlab.lib import styles
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -86,11 +87,11 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
         canvas.saveState()
         canvas.setFont('Helvetica', 7.5)
         canvas.setFillColor(colors.HexColor('#6b7f84'))
-        canvas.drawString(15 * mm, 9 * mm, 'ThreatLens AI | Static malware analysis report')
+        canvas.drawString(15 * mm, 9 * mm, 'ThreatLens AI | Threat Prediction Report')
         canvas.drawRightString(195 * mm, 9 * mm, f'Page {doc.page}')
         canvas.restoreState()
 
-    doc = BaseDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm, title='ThreatLens AI Analysis Report')
+    doc = BaseDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm, title='ThreatLens AI Threat Prediction Report')
     doc.addPageTemplates([PageTemplate(id='report', frames=frame, onPage=footer)])
 
     metadata = result.metadata
@@ -119,8 +120,8 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
 
     story: list[object] = [
         Paragraph('ThreatLens AI', styles['title']),
-        Paragraph(f'Static analysis report | {_text(result.object_path)} | {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}', styles['subtitle']),
-        Paragraph('Analyst Summary', styles['heading']),
+        Paragraph(f'Threat prediction report | {_text(result.object_path)} | {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}', styles['subtitle']),
+        Paragraph('Threat Prediction Summary', styles['heading']),
         _rows([
             ('Overall verdict', verdict.label if verdict else result.risk.classification),
             ('Risk score', f'{verdict.score}/100 ({verdict.level})' if verdict else f'{result.risk.score}/100 ({result.risk.level})'),
@@ -143,6 +144,35 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
             ('File', result.object_path), ('Type', metadata.file_type), ('MIME', metadata.mime_type),
             ('Size', f'{metadata.size_bytes} bytes'), ('Extension', metadata.extension), ('Magic bytes', metadata.magic_hex),
             ('MD5', hashes.md5), ('SHA-1', hashes.sha1), ('SHA-256', hashes.sha256),
+        ], styles),
+        Paragraph('AI Threat Prediction', styles['heading']),
+        _rows([
+            (
+                'Malware probability',
+                f'{ml.malware_probability:.1%}'
+                if ml and ml.malware_probability is not None
+                else None,
+            ),
+            (
+                'ML classification',
+                'Benign'
+                if ml_benign
+                else (ml.category if ml and ml.category else None),
+            ),
+            (
+                'Category confidence',
+                f'{ml.category_confidence:.1%}'
+                if ml and ml.category_confidence is not None
+                else None,
+            ),
+            (
+                'Detector model version',
+                ml.model_versions.get('detector') if ml else None,
+            ),
+            (
+                'Classifier model version',
+                ml.model_versions.get('classifier') if ml else None,
+            ),
         ], styles),
         Paragraph('Detection and Classification Evidence', styles['heading']),
         _rows([
@@ -193,6 +223,17 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
             ], styles))
     else:
         story.append(Paragraph('No YARA matches recorded.', styles['body']))
+    story.append(Paragraph('Security Recommendation', styles['heading']))
+    story.append(
+    Paragraph(
+        _text(
+            verdict.recommended_action
+            if verdict
+            else result.risk.recommended_action
+        ),
+                         styles['body'],
+    )
+)
 
     if result.notes:
         story.append(Paragraph('Analysis Notes', styles['heading']))

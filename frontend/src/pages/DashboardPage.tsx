@@ -2,7 +2,12 @@ import { Link } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { ScanList } from '../components/ScanList';
-import { fetchDetections, fetchThreatSnapshot } from '../lib/api';
+import {
+  downloadPreviousReport,
+  fetchDetections,
+  fetchReports,
+  fetchThreatSnapshot,
+} from '../lib/api';
 import { useAsync } from '../lib/useAsync';
 import { Button } from '../ui/Button';
 import { UploadIcon } from '../ui/icons';
@@ -15,6 +20,7 @@ export function DashboardPage() {
 
   const snapshot = useAsync(fetchThreatSnapshot);
   const detections = useAsync(() => fetchDetections(12));
+  const reports = useAsync(fetchReports);
 
   const s = snapshot.data;
 
@@ -87,6 +93,71 @@ export function DashboardPage() {
             ) : undefined
           }
         />
+      )}
+            {reports.data && reports.data.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xs font-semibold uppercase tracking-[0.08em] text-muted">
+              Previous Threat Reports
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line-soft text-left text-2xs uppercase tracking-[0.06em] text-muted">
+                  <th className="px-4 py-2.5 font-medium">Filename</th>
+                  <th className="px-4 py-2.5 font-medium">Verdict</th>
+                  <th className="px-4 py-2.5 font-medium">Risk</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Download</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-line-soft">
+                {reports.data.map((report) => (
+                  <tr
+                    key={report.report_id}
+                    className="transition-colors hover:bg-surface-raised"
+                  >
+                    <td className="px-4 py-2.5">
+                      <span className="truncate font-mono text-xs text-text">
+                        {report.filename ?? 'Unknown file'}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-2.5 text-secondary">
+                      {report.predicted_class ?? 'Unknown'}
+                    </td>
+
+                    <td className="px-4 py-2.5">
+                      <span className="text-sm font-medium">
+                        {report.risk_score ?? '—'}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-2.5 text-right">
+                      <button
+                        type="button"
+                        className="text-xs text-accent hover:underline"
+                        onClick={async () => {
+                          const blob = await downloadPreviousReport(report.report_id);
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `${report.filename ?? 'analysis'}-report.pdf`;
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        Download PDF
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );
