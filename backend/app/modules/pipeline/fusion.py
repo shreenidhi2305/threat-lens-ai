@@ -135,6 +135,11 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
         confidence = 0.65
     confidence = round(min(confidence, 0.97), 2)
 
+    # "Unknown threat": the ML model alone raised the alarm, with no matching
+    # signature or YARA rule -- i.e. a sample with no known fingerprint (the
+    # Milestone 3 "unknown malware prediction" case from the AI Prediction Module).
+    novel_threat = agreement == 'ml-only'
+
     return Verdict(
         label=label,
         score=score_int,
@@ -144,6 +149,7 @@ def fuse(result: AnalysisResult, ml: MLPrediction) -> Verdict:
         family=family,
         recommended_action=_action(level),
         agreement=agreement,
+        novel_threat=novel_threat,
         sources={
             'static_risk_score': static_score,
             'static_level': static_level,

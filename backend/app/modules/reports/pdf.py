@@ -161,6 +161,7 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
             ('Signature type', signature.type if signature.matched else None),
             ('YARA/rule families', ', '.join(rule_families) or None),
             ('Engine agreement', verdict.agreement if verdict else None),
+            ('Unknown/novel threat', 'Yes - no known signature or rule match' if verdict and verdict.novel_threat else None),
         ], styles),
     ]
 
@@ -178,6 +179,29 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
             ('Suspicious signal count', len(result.suspicious_strings)),
         ], styles),
     ])
+    behavior = result.behavior
+    story.append(Paragraph('Behavioral Analysis', styles['heading']))
+    story.append(Paragraph(_text(behavior.narrative), styles['body']))
+    if behavior.capabilities:
+        story.append(Spacer(1, 2 * mm))
+        story.append(_rows(
+            [(c.label, ' / '.join(c.evidence) or 'No evidence recorded') for c in behavior.capabilities],
+            styles,
+        ))
+
+    intel = result.threat_intel
+    story.append(Paragraph('Threat Intelligence (VirusTotal)', styles['heading']))
+    if not intel.configured:
+        story.append(Paragraph('VirusTotal is not configured for this deployment.', styles['body']))
+    elif not intel.available:
+        story.append(Paragraph(_text(intel.reason, 'VirusTotal data unavailable.'), styles['body']))
+    else:
+        story.append(_rows([
+            ('Detections', f'{intel.malicious} malicious / {intel.suspicious} suspicious of {intel.total_engines} engines'),
+            ('Undetected / harmless', f'{intel.undetected} / {intel.harmless}'),
+            ('VirusTotal report', intel.permalink),
+        ], styles))
+
     story.append(Paragraph('Network Indicators and IOCs', styles['heading']))
     story.extend(_list_block('URLs', network.urls, styles))
     story.extend(_list_block('IP addresses', network.ips, styles))

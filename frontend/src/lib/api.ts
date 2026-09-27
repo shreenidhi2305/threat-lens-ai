@@ -10,6 +10,7 @@ import type {
   Incident,
   ModelInfo,
   NotificationCounts,
+  Report,
   ReportRecord,
   ThreatSnapshot,
   ThreatStats,
@@ -70,6 +71,13 @@ export const uploadSample = async (file: File): Promise<AnalysisResult> => {
 
 export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob> =>
   (await api.post('/reports/pdf', result, { responseType: 'blob' })).data;
+
+// --- Milestone 3: persisted per-scan threat prediction reports ------------
+
+export const fetchReports = async (): Promise<Report[]> => (await api.get<Report[]>('/reports')).data;
+
+export const downloadPreviousReport = async (reportId: string): Promise<Blob> =>
+  (await api.get(`/reports/${reportId}/pdf`, { responseType: 'blob' })).data;
 
 // --- Milestone 2: monitoring, alerts, model -------------------------------
 

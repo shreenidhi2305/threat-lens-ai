@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ReportResponse(BaseModel):
     report_id: str
     status: str
+    filename: str | None = None
     sample_id: str | None = None
     file_hash: str | None = None
     predicted_class: str | None = None

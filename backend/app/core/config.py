@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     SUPABASE_STORAGE_BUCKET: str = 'samples'
 
     VIRUSTOTAL_API_KEY: str = ''
+    VIRUSTOTAL_TIMEOUT_SECONDS: float = 4.0
 
     # Comma-separated list of origins allowed to call the API from a browser.
     CORS_ALLOW_ORIGINS: str = 'http://localhost:5173,http://127.0.0.1:5173'
@@ -52,6 +53,10 @@ class Settings(BaseSettings):
     @property
     def smtp_configured(self) -> bool:
         return bool(self.SMTP_HOST and self.ALERT_EMAIL_TO)
+
+    @property
+    def virustotal_configured(self) -> bool:
+        return bool(self.VIRUSTOTAL_API_KEY)
 
 
 settings = Settings()

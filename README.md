@@ -6,8 +6,23 @@ ThreatLens AI is a full-stack cybersecurity platform for static malware analysis
 
 **Milestone 1 (Weeks 1–2) — complete.** Authentication + RBAC, file upload, and
 the full static-analysis pipeline (hashing, metadata, signature matching, YARA,
-IOC extraction, rule-based risk scoring). Milestones 2–4 (ML classifier, threat
-monitoring, analytics, deployment) are scaffolded but not yet implemented.
+IOC extraction, rule-based risk scoring, PE header + import/API-call analysis).
+
+**Milestone 2 (Weeks 3–4) — complete.** Trained LightGBM detector + family
+classifier, a fusion engine that blends the ML score with the rule engine,
+detection logging, the live Threat Monitor dashboard, and alert generation.
+
+**Milestone 3 (Weeks 5–6) — complete.** AI Prediction Module: static
+behavioral-analysis (capability profile inferred from imports/PE
+structure/YARA/strings, never from execution), an "unknown/novel threat" flag
+for ML-only catches with no known signature, and VirusTotal threat-intel
+hash lookups (best-effort, gated on `VIRUSTOTAL_API_KEY`). Plus the Analytics
+dashboard, an in-app notification feed, and persisted threat-prediction
+reports (every scan is retrievable and re-downloadable by report ID, not just
+client-held state) alongside the investigation/summary PDF report center.
+
+**Milestone 4 (Weeks 7–8) — not started.** Testing/deployment hardening and
+final documentation remain.
 
 ### Quick start (local, no database needed)
 
@@ -64,14 +79,17 @@ threatlens-ai/
   - malware_classification
   - threat_monitoring
   - alerts
+  - notifications
   - analytics
   - reports
+  - threat_intel (VirusTotal hash lookups)
+  - pipeline (orchestrates the stages above per scan)
 - Core app concerns in `backend/app/core/`:
   - `config.py`, `security.py`, `dependencies.py`, `logging.py`
 - Supabase integration layer in `backend/app/db/supabase.py`
-- ML scaffolding in `backend/app/ml/`
+- Trained ML models (LightGBM detector + family classifier) in `backend/app/ml/`
 
-> Security baseline: uploaded files are treated as untrusted input; only static-analysis scaffolding is included. No malware execution logic is implemented.
+> Security baseline: uploaded files are treated as untrusted input and are never executed. Behavioral analysis is inferred entirely from static artifacts (imports, PE structure, YARA/strings) — there is no sandboxing or dynamic execution.
 
 ## Frontend Highlights
 

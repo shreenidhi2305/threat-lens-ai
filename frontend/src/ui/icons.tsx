@@ -144,6 +144,12 @@ export const FingerprintIcon = (p: IconProps) => (
   </Base>
 );
 
+export const ActivityIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 12h4l3 8 4-16 3 8h4" />
+  </Base>
+);
+
 export const CodeIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />

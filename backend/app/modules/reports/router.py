@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
 from app.core.dependencies import CurrentUser, require_roles
@@ -66,6 +66,12 @@ def list_report_history(
     return reports_service.list_report_history(limit=limit)
 
 
+@router.get('', response_model=list[ReportResponse])
+def list_reports(_user: CurrentUser = Depends(require_roles(*_REPORT_ROLES))) -> list[ReportResponse]:
+    """Every per-scan threat-prediction report generated so far, newest first."""
+    return reports_service.list_reports()
+
+
 @router.get('/{report_id}', response_model=ReportResponse)
 def get_report_status(
     report_id: str,
@@ -74,3 +80,22 @@ def get_report_status(
     ),
 ) -> ReportResponse:
     return reports_service.get_report_status(report_id)
+
+
+@router.get('/{report_id}/pdf')
+def download_previous_pdf(
+    report_id: str,
+    _user: CurrentUser = Depends(require_roles(*_REPORT_ROLES)),
+) -> Response:
+    """Re-render the PDF for a previously generated (persisted) report."""
+    analysis = reports_service.get_analysis(report_id)
+    if analysis is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Report analysis not found')
+
+    filename = getattr(analysis, 'object_path', 'analysis').replace('\\', '/').rsplit('/', 1)[-1] or 'analysis'
+    safe_name = ''.join(char if char.isalnum() or char in '._-' else '_' for char in filename)
+    return Response(
+        content=render_analysis_pdf(analysis),
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{safe_name}-report.pdf"'},
+    )

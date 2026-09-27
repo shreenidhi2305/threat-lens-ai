@@ -63,6 +63,48 @@ class RiskAssessment(BaseModel):
     recommended_action: str
 
 
+class BehaviorCapability(BaseModel):
+    """One inferred capability, with the static evidence that raised it."""
+
+    category: str
+    label: str
+    evidence: list[str] = []
+
+
+class BehaviorProfile(BaseModel):
+    """Static behavioral-analysis output (Milestone 3 AI Prediction Module).
+
+    Derived entirely from imports, PE structure, YARA family tags and
+    suspicious strings -- the file is never executed.
+    """
+
+    available: bool = False
+    is_pe: bool = False
+    capabilities: list[BehaviorCapability] = []
+    narrative: str = 'Behavioral analysis not run.'
+    pe_summary: dict[str, object] = {}
+    import_summary: dict[str, object] = {}
+
+
+class ThreatIntelResult(BaseModel):
+    """Best-effort VirusTotal enrichment, keyed by SHA-256.
+
+    Informational only: it never affects the fused verdict score, so a slow
+    or unreachable VirusTotal never changes a scan's outcome.
+    """
+
+    configured: bool = False
+    available: bool = False
+    malicious: int | None = None
+    suspicious: int | None = None
+    undetected: int | None = None
+    harmless: int | None = None
+    total_engines: int | None = None
+    reputation: int | None = None
+    permalink: str | None = None
+    reason: str | None = None
+
+
 class CategoryScore(BaseModel):
     category: str
     probability: float
@@ -96,6 +138,11 @@ class Verdict(BaseModel):
         default_factory=dict, description="What each engine contributed."
     )
     agreement: str = Field(description="agree | ml-only | rules-only | conflict")
+    novel_threat: bool = Field(
+        default=False,
+        description="True when the ML model alone flagged this sample as malicious, with no "
+        "matching signature or YARA rule -- an unknown/zero-day-style detection.",
+    )
 
 
 class AnalysisResult(BaseModel):
@@ -113,7 +160,10 @@ class AnalysisResult(BaseModel):
     suspicious_strings: list[str] = []
     strings_sample: list[str] = []
     risk: RiskAssessment
+    behavior: BehaviorProfile = BehaviorProfile()
     # Populated by the pipeline service (Milestone 2). Absent for a bare static scan.
     ml: MLPrediction | None = None
     verdict: Verdict | None = None
+    # Populated by the pipeline service (Milestone 3). Best-effort; never blocks a scan.
+    threat_intel: ThreatIntelResult = ThreatIntelResult()
     notes: list[str]

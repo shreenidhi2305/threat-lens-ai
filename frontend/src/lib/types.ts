@@ -87,6 +87,35 @@ export interface Verdict {
   recommended_action: string;
   agreement: Agreement;
   sources: Record<string, unknown>;
+  novel_threat: boolean;
+}
+
+export interface BehaviorCapability {
+  category: string;
+  label: string;
+  evidence: string[];
+}
+
+export interface BehaviorProfile {
+  available: boolean;
+  is_pe: boolean;
+  capabilities: BehaviorCapability[];
+  narrative: string;
+  pe_summary: Record<string, unknown>;
+  import_summary: Record<string, unknown>;
+}
+
+export interface ThreatIntelResult {
+  configured: boolean;
+  available: boolean;
+  malicious: number | null;
+  suspicious: number | null;
+  undetected: number | null;
+  harmless: number | null;
+  total_engines: number | null;
+  reputation: number | null;
+  permalink: string | null;
+  reason: string | null;
 }
 
 export interface AnalysisResult {
@@ -103,8 +132,10 @@ export interface AnalysisResult {
   suspicious_strings: string[];
   strings_sample: string[];
   risk: RiskAssessment;
+  behavior: BehaviorProfile;
   ml: MLPrediction | null;
   verdict: Verdict | null;
+  threat_intel: ThreatIntelResult;
   notes: string[];
 }
 
@@ -124,6 +155,22 @@ export interface Detection {
   model_version: string | null;
   agreement: Agreement | null;
   analyst: string | null;
+}
+
+export interface Report {
+  report_id: string;
+  status: string;
+  filename: string | null;
+  sample_id: string | null;
+  file_hash: string | null;
+  predicted_class: string | null;
+  confidence: number | null;
+  is_malicious: boolean | null;
+  risk_score: number | null;
+  severity: string | null;
+  static_indicators: string[];
+  recommendation: string | null;
+  timestamp: string | null;
 }
 
 export interface TimelineBucket {
