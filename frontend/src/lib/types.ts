@@ -224,7 +224,6 @@ export interface Detection {
   agreement: Agreement | null;
   analyst: string | null;
 }
-
 export interface Report {
   report_id: string;
   status: string;

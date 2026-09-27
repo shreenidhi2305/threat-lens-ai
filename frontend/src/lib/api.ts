@@ -71,6 +71,7 @@ export const uploadSample = async (file: File): Promise<AnalysisResult> => {
   return data;
 };
 
+
 export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob> =>
   (await api.post('/reports/pdf', result, { responseType: 'blob' })).data;
 
