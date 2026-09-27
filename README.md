@@ -12,14 +12,16 @@ IOC extraction, rule-based risk scoring, PE header + import/API-call analysis).
 classifier, a fusion engine that blends the ML score with the rule engine,
 detection logging, the live Threat Monitor dashboard, and alert generation.
 
-**Milestone 3 (Weeks 5–6) — complete.** AI Prediction Module: static
-behavioral-analysis (capability profile inferred from imports/PE
-structure/YARA/strings, never from execution), an "unknown/novel threat" flag
-for ML-only catches with no known signature, and VirusTotal threat-intel
-hash lookups (best-effort, gated on `VIRUSTOTAL_API_KEY`). Plus the Analytics
-dashboard, an in-app notification feed, and persisted threat-prediction
-reports (every scan is retrievable and re-downloadable by report ID, not just
-client-held state) alongside the investigation/summary PDF report center.
+**Milestone 3 (Weeks 5–6) — complete.** AI Prediction Module: a MITRE
+ATT&CK-mapped behavioral-analysis engine (26 techniques across 12 tactics,
+kill-chain / attack-chain visualization, evidence-scored confidence — static
+inference only, no execution), plus a lightweight capability-profile summary,
+an "unknown/novel threat" flag for ML-only catches with no known signature,
+and VirusTotal threat-intel hash lookups (best-effort, gated on
+`VIRUSTOTAL_API_KEY`). Plus the Analytics dashboard, an in-app notification
+feed, and persisted threat-prediction reports (every scan is retrievable and
+re-downloadable by report ID, not just client-held state) alongside the
+investigation/summary PDF report center.
 
 **Milestone 4 (Weeks 7–8) — not started.** Testing/deployment hardening and
 final documentation remain.
@@ -83,6 +85,7 @@ threatlens-ai/
   - analytics
   - reports
   - threat_intel (VirusTotal hash lookups)
+  - behavioral_analysis (MITRE ATT&CK static inference)
   - pipeline (orchestrates the stages above per scan)
 - Core app concerns in `backend/app/core/`:
   - `config.py`, `security.py`, `dependencies.py`, `logging.py`

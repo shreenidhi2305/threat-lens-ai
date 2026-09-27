@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 
 import {
+  ActivityIcon,
   BellIcon,
   ChartIcon,
   FileScanIcon,
@@ -34,6 +35,12 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
         label: 'Reports',
         icon: FileScanIcon,
         roles: ['Security Analyst', 'Administrator', 'Researcher'],
+      },
+      {
+        to: '/behavior',
+        label: 'Behavior Analysis',
+        icon: ActivityIcon,
+        roles: ['Security Analyst', 'SOC Team Member', 'Administrator', 'Researcher'],
       },
     ],
   },

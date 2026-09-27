@@ -180,7 +180,7 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
         ], styles),
     ])
     behavior = result.behavior
-    story.append(Paragraph('Behavioral Analysis', styles['heading']))
+    story.append(Paragraph('AI Behavioral Summary', styles['heading']))
     story.append(Paragraph(_text(behavior.narrative), styles['body']))
     if behavior.capabilities:
         story.append(Spacer(1, 2 * mm))
@@ -188,6 +188,35 @@ def render_analysis_pdf(result: AnalysisResult) -> bytes:
             [(c.label, ' / '.join(c.evidence) or 'No evidence recorded') for c in behavior.capabilities],
             styles,
         ))
+
+    mitre = result.behavioral_analysis
+    story.append(Paragraph('Behavioral Analysis - MITRE ATT&CK', styles['heading']))
+    if mitre is None:
+        story.append(Paragraph('MITRE ATT&CK behavioral analysis was not run for this sample.', styles['body']))
+    else:
+        story.append(Paragraph(_text(mitre.summary), styles['body']))
+        story.append(Spacer(1, 2 * mm))
+        story.append(_rows([
+            ('Behavioral risk', f'{mitre.risk_score}/100 ({mitre.risk_level})'),
+            ('Behaviors observed', f'{mitre.behaviors_detected} of {mitre.behaviors_total} in the catalog'),
+            ('Attack chain', ' -> '.join(mitre.attack_chain) or None),
+            ('Kill-chain stage reached', mitre.kill_chain_stage),
+            ('Technique coverage', ', '.join(mitre.technique_coverage) or None),
+        ], styles))
+        observed = [b for b in mitre.behaviors if b.observed]
+        if observed:
+            story.append(Spacer(1, 2 * mm))
+            story.append(Paragraph('Observed behaviors', styles['subheading']))
+            story.append(_rows(
+                [
+                    (
+                        f'{b.id} - {b.name}',
+                        f'{b.tactic} ({b.technique_id}) - {b.severity} - {b.confidence:.0%} confidence',
+                    )
+                    for b in observed
+                ],
+                styles,
+            ))
 
     intel = result.threat_intel
     story.append(Paragraph('Threat Intelligence (VirusTotal)', styles['heading']))

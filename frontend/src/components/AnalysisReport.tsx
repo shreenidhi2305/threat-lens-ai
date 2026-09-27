@@ -1,6 +1,7 @@
 import type { AnalysisResult, Agreement, BehaviorProfile, MLPrediction, RiskLevel, ThreatIntelResult } from '../lib/types';
 import { ActivityIcon, AlertTriangleIcon, FingerprintIcon, GlobeIcon, RadarIcon } from '../ui/icons';
 import { Badge, CopyButton, InfoRow, Panel, RiskMeter, SectionLabel } from '../ui/primitives';
+import { BehaviorAnalysisPanel } from './BehaviorAnalysisPanel';
 
 const LEVEL_WASH: Record<RiskLevel, string> = {
   low: 'border-risk-low/30 bg-risk-low-wash',
@@ -362,13 +363,19 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
         </div>
       </div>
 
-      {/* AI prediction */}
+      {/* AI prediction: quick capability summary + threat intel */}
       <div>
         <SectionLabel>AI Prediction</SectionLabel>
         <div className="grid gap-4 md:grid-cols-2">
           <BehaviorPanel behavior={result.behavior} />
           <ThreatIntelPanel intel={result.threat_intel} />
         </div>
+      </div>
+
+      {/* behavioral analysis: full MITRE ATT&CK-mapped kill-chain inference */}
+      <div>
+        <SectionLabel>Behavioral Analysis · MITRE ATT&amp;CK</SectionLabel>
+        <BehaviorAnalysisPanel behavioral={result.behavioral_analysis} />
       </div>
 
       {/* file details */}

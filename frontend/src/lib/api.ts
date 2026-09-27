@@ -6,6 +6,8 @@ import type {
   AnalysisResult,
   AnalyticsSummary,
   AppNotification,
+  BehaviorCatalog,
+  BehavioralAnalysisResult,
   Detection,
   Incident,
   ModelInfo,
@@ -78,6 +80,25 @@ export const fetchReports = async (): Promise<Report[]> => (await api.get<Report
 
 export const downloadPreviousReport = async (reportId: string): Promise<Blob> =>
   (await api.get(`/reports/${reportId}/pdf`, { responseType: 'blob' })).data;
+
+// --- Milestone 3: behavioral analysis (MITRE ATT&CK) -----------------------
+
+export const analyzeBehaviorDirect = async (file: File): Promise<BehavioralAnalysisResult> => {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await api.post<BehavioralAnalysisResult>('/behavior/analyze', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+export const analyzeBehaviorFromResult = async (
+  result: AnalysisResult,
+): Promise<BehavioralAnalysisResult> =>
+  (await api.post<BehavioralAnalysisResult>('/behavior/from-analysis', result)).data;
+
+export const fetchBehaviorCatalog = async (): Promise<BehaviorCatalog> =>
+  (await api.get<BehaviorCatalog>('/behavior/catalog')).data;
 
 // --- Milestone 2: monitoring, alerts, model -------------------------------
 

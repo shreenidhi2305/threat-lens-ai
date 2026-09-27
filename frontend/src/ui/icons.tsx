@@ -150,6 +150,23 @@ export const ActivityIcon = (p: IconProps) => (
   </Base>
 );
 
+export const LayersIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 3L3 9l9 6 9-6-9-6z" />
+    <path d="M3 14l9 6 9-6" />
+    <path d="M3 17l9 6 9-6" opacity={0.6} />
+  </Base>
+);
+
+export const TargetIcon = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <circle cx="12" cy="12" r="6" opacity={0.5} />
+    <circle cx="12" cy="12" r="9" opacity={0.25} />
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3" opacity={0.5} />
+  </Base>
+);
+
 export const CodeIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />

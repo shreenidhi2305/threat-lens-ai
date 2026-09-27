@@ -12,6 +12,7 @@ const TITLES: Record<string, string> = {
   '/dashboard': 'Overview',
   '/submit': 'Submit File',
   '/reports': 'Analysis Report',
+  '/behavior': 'Behavior Analysis',
   '/threats': 'Threat Monitor',
   '/alerts': 'Alerts',
   '/analytics': 'Analytics',

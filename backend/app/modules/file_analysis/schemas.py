@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.modules.behavioral_analysis.schemas import BehavioralAnalysisResult
+
 
 class AnalysisRequest(BaseModel):
     object_path: str
@@ -166,4 +168,7 @@ class AnalysisResult(BaseModel):
     verdict: Verdict | None = None
     # Populated by the pipeline service (Milestone 3). Best-effort; never blocks a scan.
     threat_intel: ThreatIntelResult = ThreatIntelResult()
+    # Populated by the pipeline service (Milestone 3): MITRE ATT&CK-mapped behavioral
+    # inference (static only, no execution). Absent for a bare static scan.
+    behavioral_analysis: BehavioralAnalysisResult | None = None
     notes: list[str]

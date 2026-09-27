@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AppLayout } from '../layouts/AppLayout';
 import { AlertsPage } from '../pages/AlertsPage';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
+import { BehaviorPage } from '../pages/BehaviorPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ProfilePage } from '../pages/ProfilePage';
@@ -40,6 +41,7 @@ export function AppRouter() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/submit" element={<SubmitPage />} />
           <Route path="/reports" element={<ReportPage />} />
+          <Route path="/behavior" element={<BehaviorPage />} />
           <Route path="/threats" element={<ThreatsPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

@@ -118,6 +118,73 @@ export interface ThreatIntelResult {
   reason: string | null;
 }
 
+export type BehaviorSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+export interface BehavioralEvidence {
+  type: string;
+  value: string;
+  confidence: number;
+}
+
+export interface BehavioralFinding {
+  id: string;
+  tactic: string;
+  tactic_id: string;
+  technique: string;
+  technique_id: string;
+  name: string;
+  description: string;
+  severity: BehaviorSeverity;
+  confidence: number;
+  observed: boolean;
+  evidence: BehavioralEvidence[];
+  mitre_url: string | null;
+  risk_contribution: number;
+}
+
+export interface TacticSummary {
+  tactic: string;
+  tactic_id: string;
+  detected: number;
+  total: number;
+  max_severity: BehaviorSeverity | null;
+}
+
+export interface BehavioralAnalysisResult {
+  generated_at: string;
+  file_hash: string | null;
+  object_path: string | null;
+  risk_score: number;
+  risk_level: RiskLevel;
+  confidence: number;
+  behaviors_detected: number;
+  behaviors_total: number;
+  behaviors: BehavioralFinding[];
+  tactics_summary: TacticSummary[];
+  technique_coverage: string[];
+  attack_chain: string[];
+  summary: string;
+  kill_chain_stage: string | null;
+}
+
+export interface BehaviorCatalogEntry {
+  id: string;
+  tactic: string;
+  tactic_id: string;
+  technique: string;
+  technique_id: string;
+  name: string;
+  description: string;
+  severity: BehaviorSeverity;
+  mitre_url: string;
+}
+
+export interface BehaviorCatalog {
+  total: number;
+  behaviors: BehaviorCatalogEntry[];
+  tactic_order: string[];
+}
+
 export interface AnalysisResult {
   object_path: string;
   sha256: string;
@@ -136,6 +203,7 @@ export interface AnalysisResult {
   ml: MLPrediction | null;
   verdict: Verdict | null;
   threat_intel: ThreatIntelResult;
+  behavioral_analysis: BehavioralAnalysisResult | null;
   notes: string[];
 }
 

@@ -5,6 +5,7 @@ uploaded file:
 
     File Service (done by caller)
       -> Analysis Service        static analysis + feature extraction
+      -> Behavioral Analysis     MITRE ATT&CK inference (static only, no execution)
       -> ML Prediction Service   model inference
       -> Classification Service  verdict fusion (Result Generation)
       -> Threat Intel Service    VirusTotal enrichment (best-effort, informational)
@@ -19,6 +20,7 @@ import logging
 
 from app.ml.inference.predictor import predict as ml_predict
 from app.modules.alerts.service import alerts_service
+from app.modules.behavioral_analysis.service import behavioral_analysis_service
 from app.modules.file_analysis.schemas import AnalysisResult, MLPrediction
 from app.modules.file_analysis.service import file_analysis_service
 from app.modules.pipeline.fusion import fuse
@@ -34,7 +36,23 @@ class PipelineService:
         # 1. static analysis
         result = file_analysis_service.analyze_static_file(object_path, data)
 
-        # 2. ML inference
+        # 2. behavioral analysis (MITRE ATT&CK inference from static signals only)
+        try:
+            result.behavioral_analysis = behavioral_analysis_service.analyze(
+                data,
+                object_path=object_path,
+                suspicious_strings=result.suspicious_strings,
+                yara_matches=[m.model_dump() for m in result.yara_matches],
+                network=result.network_indicators.model_dump(),
+                metadata=result.metadata.model_dump(),
+                signature_match=result.signature_match.model_dump(),
+                strings_sample=result.strings_sample,
+                file_hash=result.sha256,
+            )
+        except Exception:  # noqa: BLE001 - never let behavioral analysis break the pipeline
+            logger.exception('Behavioral analysis failed')
+
+        # 3. ML inference
         try:
             ml = MLPrediction(**ml_predict(data, result.model_dump()))
         except Exception:  # noqa: BLE001 - never let the model break the pipeline
@@ -42,25 +60,25 @@ class PipelineService:
             ml = MLPrediction(available=False, reason='inference error')
         result.ml = ml
 
-        # 3. classification / result generation
+        # 4. classification / result generation
         result.verdict = fuse(result, ml)
 
-        # 4. threat intelligence enrichment (best-effort; never affects the verdict)
+        # 5. threat intelligence enrichment (best-effort; never affects the verdict)
         try:
             result.threat_intel = threat_intel_service.lookup_hash(result.hashes.sha256)
         except Exception:  # noqa: BLE001 - a VirusTotal outage must not break a scan
             logger.exception('Threat intel lookup failed')
 
-        # 5. persisted threat prediction report
+        # 6. persisted threat prediction report
         try:
             reports_service.create_threat_prediction_report(result)
         except Exception:  # noqa: BLE001 - report persistence must not break detection
             logger.exception('Threat prediction report creation failed')
 
-        # 6. detection logging
+        # 7. detection logging
         detection = threat_monitoring_service.record(result, actor=actor)
 
-        # 7. alerting
+        # 8. alerting
         alerts_service.evaluate(result, detection_id=detection.id, actor=actor)
 
         return result
