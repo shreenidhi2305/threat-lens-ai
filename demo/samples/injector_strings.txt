@@ -1,0 +1,8 @@
+imports:
+VirtualAllocEx
+WriteProcessMemory
+CreateRemoteThread
+NtUnmapViewOfSection
+SetThreadContext
+QueueUserAPC
+RtlCreateUserThread
