@@ -1,180 +1,136 @@
 # ThreatLens AI: Malware Classification & Threat Detection System
 
-ThreatLens AI is a full-stack cybersecurity platform for static malware analysis, machine-learning-based classification, threat monitoring, alerting, and reporting.
+ThreatLens AI is a full-stack cybersecurity platform for static malware analysis, machine-learning classification, behavioral analysis, threat monitoring, alerting, reporting and administration. Files are analysed, never executed.
 
 ## Milestone status
 
-**Milestone 1 (Weeks 1–2) — complete.** Authentication + RBAC, file upload, and
-the full static-analysis pipeline (hashing, metadata, signature matching, YARA,
-IOC extraction, rule-based risk scoring, PE header + import/API-call analysis).
+**Milestone 1 (Weeks 1-2): complete.** Authentication and RBAC, file upload, and the static-analysis pipeline: hashing, file-type ID, metadata, PE header and import/API analysis, string extraction, YARA, signature matching, IOC extraction, risk scoring.
 
-**Milestone 2 (Weeks 3–4) — complete.** Trained LightGBM detector + family
-classifier, a fusion engine that blends the ML score with the rule engine,
-detection logging, the live Threat Monitor dashboard, and alert generation.
+**Milestone 2 (Weeks 3-4): complete.** Trained LightGBM detector and family classifier, a fusion engine that blends the ML score with the rule engine, detection logging, the live Threat Monitor, and alert generation.
 
-**Milestone 3 (Weeks 5–6) — complete.** AI Prediction Module: a MITRE
-ATT&CK-mapped behavioral-analysis engine (26 techniques across 12 tactics,
-kill-chain / attack-chain visualization, evidence-scored confidence — static
-inference only, no execution), plus a lightweight capability-profile summary,
-an "unknown/novel threat" flag for ML-only catches with no known signature,
-and VirusTotal threat-intel hash lookups (best-effort, gated on
-`VIRUSTOTAL_API_KEY`). Plus the Analytics dashboard, an in-app notification
-feed, and persisted threat-prediction reports (every scan is retrievable and
-re-downloadable by report ID, not just client-held state) alongside the
-investigation/summary PDF report center.
+**Milestone 3 (Weeks 5-6): complete.** MITRE ATT&CK behavioral analysis (static inference only), VirusTotal threat-intel lookups, threat-prediction reports, the analytics dashboard, in-app notifications, and the investigation / summary / monitoring PDF reports.
 
-**Milestone 4 (Weeks 7–8) — not started.** Testing/deployment hardening and
-final documentation remain.
+**Milestone 4 (Weeks 7-8): in progress.**
+- Done: workflow validation (`docs/TEST_PLAN_AND_VALIDATION.md`), UI responsiveness and performance work, the full **Administrator console** (users and roles, settings and security policies, integrations, activity log, ML model management), API-gateway **rate limiting**, **SIEM/SOAR** webhook integration, an analyst **feedback loop** with model-drift detection, the **Researcher workspace** (datasets and malware families), incident tracking, persistent alerts/incidents, production start-up safety checks, API docs and a Postman collection, and an end-to-end demo driver.
+- Remaining: production container images and the cloud deployment.
 
-### Quick start (local, no database needed)
+## Quick start (local, no database needed)
 
 ```bash
-# terminal 1 — API
-python -m uvicorn app.main:app --app-dir backend --port 8000
-# terminal 2 — UI
+# terminal 1: API
+cd backend && pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000
+# terminal 2: UI
 npm --prefix frontend install && npm --prefix frontend run dev
 ```
 
-Open http://localhost:5173 and sign in as `analyst@local` (any password). With
-no Supabase env vars set, the backend uses a local dev login and stores uploads
-under `backend/var/uploads/`. Backend tests: `cd backend && python -m pytest`.
+Open http://localhost:5173 and sign in with any password as:
+
+| Email | Role |
+|---|---|
+| `analyst@local` | Security Analyst |
+| `soc@local` | SOC Team Member |
+| `admin@local` | Administrator |
+| `researcher@local` | Researcher |
+
+With no Supabase variables set, the backend uses the local dev login, in-memory data and local file storage (`backend/var/uploads/`). Run the tests with `cd backend && python -m pytest`.
+
+To see every feature populated, start both servers and run the demo driver:
+
+```bash
+python demo/m4_end_to_end_demo.py        # add --skip-real when offline
+```
+
+See `demo/DEMO_SCRIPT.md` for the screen-share walkthrough.
+
+## Roles
+
+| Role | Can |
+|---|---|
+| Security Analyst | Upload and scan files; classification, behavior and investigation reports; threat monitor; alerts and incidents; confirm or correct verdicts; research workspace |
+| SOC Team Member | Monitor detections and active threats; alerts, history and incidents; operational reports; analytics |
+| Administrator | Manage users and roles; configure settings and security policies; manage integrations and ML models; monitor platform activity; everything above |
+| Researcher | Upload samples; malware datasets and family analysis; behavior analysis; export research reports and datasets; historical analytics |
+
+Full matrix and enforcement points: `docs/RBAC.md`.
 
 ## Architecture
 
-This repository is organized as a modular monorepo:
+A modular monorepo:
 
-- **frontend/**: React + Vite + TypeScript + Tailwind UI
-- **backend/**: FastAPI service with domain-oriented modules
-- **supabase/**: migration/seed assets for Supabase PostgreSQL
-- **docs/**: additional project documentation
+- **frontend/**: React + Vite + TypeScript + Tailwind (lazy-loaded, role-guarded pages)
+- **backend/**: FastAPI service, one module per domain (`backend/app/modules/`)
+- **supabase/**: PostgreSQL migrations and seed data
+- **demo/**: sample files and the demo driver
+- **docs/**: architecture, RBAC, test plan, OpenAPI spec and Postman collection
 
-## Technology Stack
+How the architecture diagram maps to code: `docs/ARCHITECTURE.md`.
 
-- **Frontend**: React, Vite, TypeScript, Tailwind CSS, React Router, Axios
-- **Backend**: FastAPI, Pydantic, SQLAlchemy, JWT auth/RBAC scaffolding
-- **Data/Storage**: Supabase PostgreSQL + Supabase Storage
-- **ML**: scikit-learn, TensorFlow, Pandas, NumPy (scaffolded)
-- **Malware Analysis**: static-analysis analyzer interfaces (hashing, metadata, PE, strings, imports, network IOCs, YARA)
-- **Threat Intel**: VirusTotal API key configuration scaffold
-- **DevOps**: Docker, Docker Compose, GitHub
+### Backend modules
 
-## Repository Structure
+| Module | Purpose |
+|---|---|
+| `auth`, `users` | JWT sign-in, profiles, role lookup |
+| `file_analysis` | Upload, storage, hashing, metadata, PE, strings, imports, IOCs, YARA, signatures, risk |
+| `behavioral_analysis` | ATT&CK behavior inference from static signals |
+| `malware_classification`, `pipeline` | ML inference and the per-scan orchestration (verdict fusion) |
+| `threat_monitoring` | Detection log, dashboards data, monitoring report |
+| `alerts`, `notifications` | Alerts, incidents, email, in-app feed, SIEM forwarding |
+| `reports`, `analytics` | PDF reports and history, analytics rollups |
+| `threat_intel` | VirusTotal hash lookups |
+| `model_management` | Analyst feedback, live accuracy, drift detection |
+| `research` | Datasets and malware-family analysis |
+| `admin`, `audit`, `integrations` | Administrator console, activity log, SIEM/SOAR webhook |
 
-```text
-threatlens-ai/
-├── frontend/
-├── backend/
-├── supabase/
-├── docs/
-├── docker-compose.yml
-├── .env.example
-└── README.md
-```
+Core concerns in `backend/app/core/`: configuration, JWT security, rate limiting, request metrics, runtime-editable settings, start-up safety checks.
 
-## Backend Highlights
+> Security baseline: uploaded files are untrusted and never executed. Behavioral analysis is inferred from static artifacts (imports, PE structure, YARA, strings); there is no sandbox or dynamic execution.
 
-- API prefix: `/api/v1`
-- Domain modules in `backend/app/modules/`:
-  - auth
-  - users
-  - file_analysis
-  - malware_classification
-  - threat_monitoring
-  - alerts
-  - notifications
-  - analytics
-  - reports
-  - threat_intel (VirusTotal hash lookups)
-  - behavioral_analysis (MITRE ATT&CK static inference)
-  - pipeline (orchestrates the stages above per scan)
-- Core app concerns in `backend/app/core/`:
-  - `config.py`, `security.py`, `dependencies.py`, `logging.py`
-- Supabase integration layer in `backend/app/db/supabase.py`
-- Trained ML models (LightGBM detector + family classifier) in `backend/app/ml/`
+## Technology stack
 
-> Security baseline: uploaded files are treated as untrusted input and are never executed. Behavioral analysis is inferred entirely from static artifacts (imports, PE structure, YARA/strings) — there is no sandboxing or dynamic execution.
+- **Frontend:** React, Vite, TypeScript, Tailwind CSS, React Router, Axios
+- **Backend:** Python, FastAPI, Pydantic, JWT (python-jose)
+- **Data and storage:** Supabase (PostgreSQL + Storage), with an in-memory fallback for local development
+- **ML:** LightGBM, scikit-learn, pandas, NumPy; features from `pefile` and our own extractor
+- **Analysis:** YARA (`yara-python`), signature matching, MITRE ATT&CK mapping
+- **Threat intel and integrations:** VirusTotal API, SMTP, SIEM/SOAR webhook
+- **Reports:** ReportLab
+- **DevOps:** Docker, Docker Compose, GitHub
 
-## Frontend Highlights
+## Configuration
 
-- Route scaffolding for:
-  - Login
-  - Dashboard
-  - File Upload
-  - File Analysis
-  - Malware Report
-  - Threat Monitoring
-  - Alerts
-  - Analytics
-  - Profile
-- Centralized API client at `frontend/src/services/apiClient.ts`
+Copy `.env.example` to `.env`. Every variable is documented there. The important ones:
 
-## Local Development
+| Variable | Purpose |
+|---|---|
+| `APP_ENV` | `production` refuses to start with unsafe configuration |
+| `JWT_SECRET_KEY` | Signing key for tokens; generate a long random value |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | Identity provider and database; unset means local dev mode |
+| `CORS_ALLOW_ORIGINS` | Frontend origin(s) allowed to call the API |
+| `RATE_LIMIT_PER_MINUTE`, `LOGIN_RATE_LIMIT_PER_MINUTE` | API gateway limits (also editable in the Admin Console) |
+| `VIRUSTOTAL_API_KEY`, `SMTP_*`, `SIEM_WEBHOOK_*` | Optional integrations |
 
-### Prerequisites
+Database setup: apply `supabase/migrations/001` to `006` in order (`supabase/README.md`).
 
-- Node.js 20+
-- Python 3.11+
+## API
 
-### Setup
-
-1. Copy env template:
-
-```bash
-cp .env.example .env
-```
-
-2. Frontend:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-3. Backend:
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-## Environment Variables
-
-Define these in `.env`:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY`
-- `SUPABASE_DB_URL`
-- `SUPABASE_STORAGE_BUCKET`
-- `JWT_SECRET_KEY`
-- `JWT_ALGORITHM`
-- `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`
-- `VIRUSTOTAL_API_KEY`
-- `VITE_API_BASE_URL`
-
-## Supabase Configuration
-
-- Use Supabase PostgreSQL for relational entities (users, metadata, analysis results, threats, alerts, reports).
-- Use Supabase Storage for uploaded malware samples.
-- Keep Supabase calls within the dedicated DB/integration layer.
+- Interactive docs: http://localhost:8000/docs
+- OpenAPI spec: `docs/openapi.json`; Postman collection: `docs/postman/ThreatLens.postman_collection.json`
+- Regenerate both: `cd backend && PYTHONPATH=. python scripts/export_api_docs.py`
 
 ## Docker
 
-Run the frontend and backend containers:
-
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8000`
 
-## Contribution Workflow
+## Contribution workflow
 
 1. Create a branch
 2. Make focused changes
-3. Run relevant checks (build/tests)
-4. Open/update PR with clear summary
+3. Run the checks: `cd backend && python -m pytest` and `cd frontend && npm run build`
+4. Open or update a PR with a clear summary

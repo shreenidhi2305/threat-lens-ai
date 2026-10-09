@@ -1,13 +1,16 @@
 from fastapi import APIRouter
 
+from app.modules.admin.router import router as admin_router
 from app.modules.alerts.router import router as alerts_router
 from app.modules.analytics.router import router as analytics_router
 from app.modules.auth.router import router as auth_router
 from app.modules.behavioral_analysis.router import router as behavioral_analysis_router
 from app.modules.file_analysis.router import router as file_analysis_router
 from app.modules.malware_classification.router import router as malware_router
+from app.modules.model_management.router import router as feedback_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.reports.router import router as reports_router
+from app.modules.research.router import router as research_router
 from app.modules.threat_monitoring.router import router as threats_router
 from app.modules.users.router import router as users_router
 
@@ -24,3 +27,7 @@ api_router.include_router(alerts_router, prefix='/alerts', tags=['alerts'])
 api_router.include_router(notifications_router, prefix='/notifications', tags=['notifications'])
 api_router.include_router(analytics_router, prefix='/analytics', tags=['analytics'])
 api_router.include_router(reports_router, prefix='/reports', tags=['reports'])
+
+api_router.include_router(feedback_router, prefix='/feedback', tags=['feedback'])
+api_router.include_router(research_router, prefix='/research', tags=['research'])
+api_router.include_router(admin_router, prefix='/admin', tags=['admin'])

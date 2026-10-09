@@ -1,11 +1,12 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { NotificationBell } from '../components/NotificationBell';
-import { visibleSections } from '../lib/nav';
+import { canOpen, visibleSections } from '../lib/nav';
+import { Button } from '../ui/Button';
 import { ChevronDownIcon, LogoutIcon, ShieldIcon } from '../ui/icons';
-import { Spinner } from '../ui/primitives';
+import { EmptyState, Spinner } from '../ui/primitives';
 
 const NOTIFIABLE_ROLES = new Set(['Security Analyst', 'SOC Team Member', 'Administrator']);
 
@@ -14,14 +15,16 @@ const TITLES: Record<string, string> = {
   '/submit': 'Submit File',
   '/reports': 'Analysis Report',
   '/behavior': 'Behavior Analysis',
+  '/research': 'Research',
   '/threats': 'Threat Monitor',
   '/alerts': 'Alerts',
   '/analytics': 'Analytics',
+  '/admin': 'Admin Console',
   '/profile': 'Profile',
 };
 
-function initials(email: string): string {
-  return email.slice(0, 2).toUpperCase();
+function initials(name: string): string {
+  return name.slice(0, 2).toUpperCase();
 }
 
 function UserMenu() {
@@ -57,10 +60,12 @@ function UserMenu() {
         className="flex items-center gap-2 rounded-md py-1 pl-1 pr-2 transition-colors duration-150 ease-out hover:bg-surface-raised"
       >
         <span className="grid size-7 place-items-center rounded-md bg-accent-quiet text-2xs font-semibold text-accent">
-          {initials(user.email)}
+          {initials(user.display_name || user.email)}
         </span>
         <span className="hidden text-left sm:block">
-          <span className="block text-xs font-medium leading-tight text-text">{user.email}</span>
+          <span className="block text-xs font-medium leading-tight text-text">
+            {user.display_name || user.email}
+          </span>
           <span className="block text-2xs leading-tight text-muted">{user.role}</span>
         </span>
         <ChevronDownIcon className="text-muted" />
@@ -91,6 +96,7 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const sections = visibleSections(user?.role);
   const title = TITLES[pathname] ?? 'ThreatLens';
+  const allowed = canOpen(pathname, user?.role);
 
   return (
     <div className="flex min-h-dvh bg-bg">
@@ -171,7 +177,20 @@ export function AppLayout() {
               </div>
             }
           >
-            <Outlet />
+            {allowed ? (
+              <Outlet />
+            ) : (
+              <EmptyState
+                icon={<ShieldIcon />}
+                title="Not available for your role"
+                description={`${title} is restricted. Your role (${user?.role ?? 'unknown'}) doesn't include it.`}
+                action={
+                  <Link to="/dashboard">
+                    <Button variant="secondary">Back to overview</Button>
+                  </Link>
+                }
+              />
+            )}
           </Suspense>
         </main>
       </div>

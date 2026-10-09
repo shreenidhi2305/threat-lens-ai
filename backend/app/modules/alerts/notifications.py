@@ -47,3 +47,24 @@ def send_email(alert: Alert) -> bool:
     except Exception:  # noqa: BLE001 - notification failure must not break alerting
         logger.exception('Failed to send alert email for %s', alert.id)
         return False
+
+
+def send_test_email() -> tuple[bool, str | None]:
+    """Send a harmless test message so an administrator can verify the SMTP settings."""
+    if not settings.smtp_configured:
+        return False, 'SMTP_HOST and ALERT_EMAIL_TO are not configured'
+    msg = EmailMessage()
+    msg['Subject'] = '[ThreatLens] Test notification'
+    msg['From'] = settings.ALERT_EMAIL_FROM
+    msg['To'] = settings.ALERT_EMAIL_TO
+    msg.set_content('This is a test message from the ThreatLens AI administrator console.')
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
+            if settings.SMTP_USE_TLS:
+                server.starttls()
+            if settings.SMTP_USERNAME:
+                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+            server.send_message(msg)
+        return True, None
+    except Exception as exc:  # noqa: BLE001
+        return False, f'{type(exc).__name__}: {exc}'[:200]

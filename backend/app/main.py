@@ -9,6 +9,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.metrics import metrics
+from app.core.rate_limit import RateLimitMiddleware
+from app.core.startup_checks import validate_settings
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,7 @@ def _warm_up() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    validate_settings()
     started = time.perf_counter()
     _warm_up()
     logger.info('Warm-up finished in %.2fs', time.perf_counter() - started)
@@ -38,6 +42,7 @@ def create_application() -> FastAPI:
     configure_logging()
     app = FastAPI(title=settings.PROJECT_NAME, version=settings.API_VERSION, lifespan=lifespan)
 
+    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(
         CORSMiddleware,
@@ -53,7 +58,9 @@ def create_application() -> FastAPI:
         response = await call_next(request)
         elapsed = time.perf_counter() - started
         response.headers['X-Process-Time'] = f'{elapsed:.3f}'
-        if elapsed >= settings.SLOW_REQUEST_SECONDS:
+        slow = elapsed >= settings.SLOW_REQUEST_SECONDS
+        metrics.record(response.status_code, elapsed, slow=slow)
+        if slow:
             logger.warning('Slow request %s %s took %.2fs', request.method, request.url.path, elapsed)
         return response
 

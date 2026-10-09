@@ -521,8 +521,8 @@ def test_wf7_unknown_hash_without_api_key_degrades_gracefully():
 
 
 def test_wf7_oversized_upload_guard_exists():
-    # The route enforces a 32 MiB cap; assert the constant is wired (sending a
-    # real 33 MiB body in CI would be wasteful).
-    from app.modules.file_analysis import router as files_router
+    # The route enforces a 32 MiB cap by default (MAX_UPLOAD_MB, admin-editable); assert the
+    # setting is wired (sending a real 33 MiB body in CI would be wasteful).
+    from app.core.runtime_settings import runtime_settings
 
-    assert files_router._MAX_UPLOAD_BYTES == 32 * 1024 * 1024
+    assert int(runtime_settings.get("MAX_UPLOAD_MB")) == 32

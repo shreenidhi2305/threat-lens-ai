@@ -8,6 +8,7 @@ export interface UserProfile {
   id: string;
   email: string;
   role: UserRole;
+  display_name: string | null;
 }
 
 export interface FileHashes {
@@ -307,6 +308,7 @@ export interface Incident {
   status: 'open' | 'contained' | 'closed';
   severity: string;
   alert_ids: string[];
+  closed_at: string | null;
 }
 
 export type NotificationCategory = 'alert' | 'status' | 'incident' | 'report';

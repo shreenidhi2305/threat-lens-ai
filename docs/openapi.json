@@ -1,0 +1,6362 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ThreatLens AI API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_users_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update Me",
+        "operationId": "update_me_api_v1_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/files/limits": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Upload Limits",
+        "description": "Current upload cap, so the UI can validate before sending (the cap is admin-editable).",
+        "operationId": "upload_limits_api_v1_files_limits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Response Upload Limits Api V1 Files Limits Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/files/upload": {
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Upload And Scan",
+        "description": "Upload a suspicious file, store it, and run the full detection pipeline.\n\nStatic analysis, ML inference, verdict fusion, detection logging and alerting\nall run (Milestone 2). Nothing is executed.",
+        "operationId": "upload_and_scan_api_v1_files_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_and_scan_api_v1_files_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/files/scan": {
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Scan Stored File",
+        "description": "Re-run the full pipeline on an already-stored sample (by object path).\n\nFalls back to analysing the path string itself when no stored object exists,\nso the endpoint stays usable in tests and quick demos.",
+        "operationId": "scan_stored_file_api_v1_files_scan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analysis/limits": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Upload Limits",
+        "description": "Current upload cap, so the UI can validate before sending (the cap is admin-editable).",
+        "operationId": "upload_limits_api_v1_analysis_limits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Response Upload Limits Api V1 Analysis Limits Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analysis/upload": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Upload And Scan",
+        "description": "Upload a suspicious file, store it, and run the full detection pipeline.\n\nStatic analysis, ML inference, verdict fusion, detection logging and alerting\nall run (Milestone 2). Nothing is executed.",
+        "operationId": "upload_and_scan_api_v1_analysis_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_and_scan_api_v1_analysis_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analysis/scan": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Scan Stored File",
+        "description": "Re-run the full pipeline on an already-stored sample (by object path).\n\nFalls back to analysing the path string itself when no stored object exists,\nso the endpoint stays usable in tests and quick demos.",
+        "operationId": "scan_stored_file_api_v1_analysis_scan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/malware/classify": {
+      "post": {
+        "tags": [
+          "malware"
+        ],
+        "summary": "Classify",
+        "description": "Run the pipeline for a stored sample or classify supplied analysis features.",
+        "operationId": "classify_api_v1_malware_classify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AnalysisResult-Output"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ClassificationResponse"
+                    }
+                  ],
+                  "title": "Response Classify Api V1 Malware Classify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/malware/model": {
+      "get": {
+        "tags": [
+          "malware"
+        ],
+        "summary": "Model Info",
+        "description": "Registry status: which models are loaded and their evaluation metrics.",
+        "operationId": "model_info_api_v1_malware_model_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelInfo"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/behavior/catalog": {
+      "get": {
+        "tags": [
+          "behavior"
+        ],
+        "summary": "Get Catalog",
+        "description": "Return the full catalog of behaviors this system can infer (static reference).",
+        "operationId": "get_catalog_api_v1_behavior_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Catalog Api V1 Behavior Catalog Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/behavior/tactics": {
+      "get": {
+        "tags": [
+          "behavior"
+        ],
+        "summary": "Get Tactics",
+        "operationId": "get_tactics_api_v1_behavior_tactics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Tactics Api V1 Behavior Tactics Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/behavior/analyze": {
+      "post": {
+        "tags": [
+          "behavior"
+        ],
+        "summary": "Analyze Upload",
+        "description": "Static behavioral analysis directly on an uploaded file (no execution).",
+        "operationId": "analyze_upload_api_v1_behavior_analyze_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_upload_api_v1_behavior_analyze_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehavioralAnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/behavior/from-analysis": {
+      "post": {
+        "tags": [
+          "behavior"
+        ],
+        "summary": "Analyze From Analysis",
+        "description": "Derive behavioral analysis from an existing AnalysisResult (e.g. from /files/upload).",
+        "operationId": "analyze_from_analysis_api_v1_behavior_from_analysis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisResult-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehavioralAnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/behavior/from-storage": {
+      "post": {
+        "tags": [
+          "behavior"
+        ],
+        "summary": "Analyze Stored",
+        "description": "Behavioral analysis for a previously uploaded object path.",
+        "operationId": "analyze_stored_api_v1_behavior_from_storage_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BehavioralAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehavioralAnalysisResult-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/threats/snapshot": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Snapshot",
+        "operationId": "snapshot_api_v1_threats_snapshot_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatSnapshot"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/threats/detections": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Detections",
+        "operationId": "detections_api_v1_threats_detections_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(low|medium|high)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(malicious|suspicious|benign)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verdict"
+            }
+          },
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Detection"
+                  },
+                  "title": "Response Detections Api V1 Threats Detections Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/threats/timeline": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Timeline",
+        "operationId": "timeline_api_v1_threats_timeline_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(24h|7d|30d)$",
+              "default": "24h",
+              "title": "Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineBucket"
+                  },
+                  "title": "Response Timeline Api V1 Threats Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/threats/stats": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Stats",
+        "operationId": "stats_api_v1_threats_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/threats/families": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Families",
+        "operationId": "families_api_v1_threats_families_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Families Api V1 Threats Families Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/threats/report": {
+      "get": {
+        "tags": [
+          "threats"
+        ],
+        "summary": "Download Monitoring Report",
+        "description": "Full monitoring snapshot, plus detections matching the Threat Monitor filters.",
+        "operationId": "download_monitoring_report_api_v1_threats_report_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(24h|7d|30d)$",
+              "default": "24h",
+              "title": "Window"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(low|medium|high)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(malicious|suspicious|benign)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verdict"
+            }
+          },
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "threats_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Threats Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List Alerts",
+        "operationId": "list_alerts_api_v1_alerts__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(open|acknowledged|resolved)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  },
+                  "title": "Response List Alerts Api V1 Alerts  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/stats": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Alert Stats",
+        "operationId": "alert_stats_api_v1_alerts_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/alerts/incidents": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List Incidents",
+        "operationId": "list_incidents_api_v1_alerts_incidents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Incident"
+                  },
+                  "type": "array",
+                  "title": "Response List Incidents Api V1 Alerts Incidents Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Create Incident",
+        "operationId": "create_incident_api_v1_alerts_incidents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/alerts/incidents/{incident_id}": {
+      "patch": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Update Incident",
+        "operationId": "update_incident_api_v1_alerts_incidents__incident_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIncidentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/acknowledge": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Acknowledge",
+        "operationId": "acknowledge_api_v1_alerts__alert_id__acknowledge_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertActionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/resolve": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Resolve",
+        "operationId": "resolve_api_v1_alerts__alert_id__resolve_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertActionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Notifications",
+        "operationId": "list_notifications_api_v1_notifications__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Notification"
+                  },
+                  "title": "Response List Notifications Api V1 Notifications  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Unread Count",
+        "operationId": "unread_count_api_v1_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCounts"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark Read",
+        "operationId": "mark_read_api_v1_notifications__notification_id__read_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark All Read",
+        "operationId": "mark_all_read_api_v1_notifications_read_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Response Mark All Read Api V1 Notifications Read All Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analytics/summary": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Summary",
+        "operationId": "get_summary_api_v1_analytics_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analytics/timeline": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Timeline",
+        "operationId": "get_timeline_api_v1_analytics_timeline_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(24h|7d|30d)$",
+              "default": "7d",
+              "title": "Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineBucket"
+                  },
+                  "title": "Response Get Timeline Api V1 Analytics Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/pdf": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Download Pdf",
+        "description": "Render the client-held analysis result without reading the uploaded sample.",
+        "operationId": "download_pdf_api_v1_reports_pdf_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisResult-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/summary": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Download Summary Pdf",
+        "description": "Generate an aggregate threat-monitoring / operational report for the given window.",
+        "operationId": "download_summary_pdf_api_v1_reports_summary_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(24h|7d|30d)$",
+              "default": "7d",
+              "title": "Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/history": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "List Report History",
+        "operationId": "list_report_history_api_v1_reports_history_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportRecord"
+                  },
+                  "title": "Response List Report History Api V1 Reports History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "List Reports",
+        "description": "Every per-scan threat-prediction report generated so far, newest first.",
+        "operationId": "list_reports_api_v1_reports_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Reports Api V1 Reports Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Get Report Status",
+        "operationId": "get_report_status_api_v1_reports__report_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}/pdf": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Download Previous Pdf",
+        "description": "Re-render the PDF for a previously generated (persisted) report.",
+        "operationId": "download_previous_pdf_api_v1_reports__report_id__pdf_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedback": {
+      "post": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Submit Feedback",
+        "description": "Confirm or correct a verdict. The latest correction for a sample wins.",
+        "operationId": "submit_feedback_api_v1_feedback_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "List Feedback",
+        "operationId": "list_feedback_api_v1_feedback_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000,
+              "minimum": 1,
+              "default": 200,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackRecord"
+                  },
+                  "title": "Response List Feedback Api V1 Feedback Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedback/summary": {
+      "get": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Feedback Summary",
+        "operationId": "feedback_summary_api_v1_feedback_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/feedback/export.csv": {
+      "get": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Export Feedback",
+        "operationId": "export_feedback_api_v1_feedback_export_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/research/datasets": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "List Datasets",
+        "operationId": "list_datasets_api_v1_research_datasets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DatasetInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Datasets Api V1 Research Datasets Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/research/datasets/{dataset_id}/export.csv": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Export Dataset",
+        "operationId": "export_dataset_api_v1_research_datasets__dataset_id__export_csv_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/families": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "List Families",
+        "operationId": "list_families_api_v1_research_families_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FamilySummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Families Api V1 Research Families Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/research/families/export.csv": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Export Families",
+        "operationId": "export_families_api_v1_research_families_export_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/research/families/{family}": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Get Family",
+        "operationId": "get_family_api_v1_research_families__family__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "family",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Family"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/overview": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Overview",
+        "operationId": "overview_api_v1_admin_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformOverview"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_v1_admin_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ManagedUser"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{user_id}/role": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Change Role",
+        "operationId": "change_role_api_v1_admin_users__user_id__role_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedUser"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/settings": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_v1_admin_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Settings Api V1 Admin Settings Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Update Settings",
+        "operationId": "update_settings_api_v1_admin_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Update Settings Api V1 Admin Settings Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/settings/reset": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Reset Settings",
+        "operationId": "reset_settings_api_v1_admin_settings_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reset Settings Api V1 Admin Settings Reset Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/integrations": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Integrations",
+        "operationId": "integrations_api_v1_admin_integrations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IntegrationStatus"
+                  },
+                  "type": "array",
+                  "title": "Response Integrations Api V1 Admin Integrations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/integrations/{integration_id}/test": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Test Integration",
+        "operationId": "test_integration_api_v1_admin_integrations__integration_id__test_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "integration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Integration Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationTestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Audit Log",
+        "operationId": "audit_log_api_v1_admin_audit_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEvent"
+                  },
+                  "title": "Response Audit Log Api V1 Admin Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit/export.csv": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Export Audit",
+        "operationId": "export_audit_api_v1_admin_audit_export_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/models": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Models",
+        "operationId": "models_api_v1_admin_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Models Api V1 Admin Models Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/models/reload": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Reload Model Registry",
+        "description": "Hot-swap the model artifacts on disk without restarting the API.",
+        "operationId": "reload_model_registry_api_v1_admin_models_reload_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reload Model Registry Api V1 Admin Models Reload Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alert": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "high | critical"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "open"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "sample_sha256": {
+            "type": "string",
+            "title": "Sample Sha256"
+          },
+          "sample_name": {
+            "type": "string",
+            "title": "Sample Name"
+          },
+          "verdict_label": {
+            "type": "string",
+            "title": "Verdict Label"
+          },
+          "verdict_score": {
+            "type": "integer",
+            "title": "Verdict Score"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "agreement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement"
+          },
+          "detection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detection Id"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "notified": {
+            "type": "boolean",
+            "title": "Notified",
+            "default": false
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "severity",
+          "title",
+          "sample_sha256",
+          "sample_name",
+          "verdict_label",
+          "verdict_score"
+        ],
+        "title": "Alert"
+      },
+      "AlertActionRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "AlertActionRequest"
+      },
+      "AlertStats": {
+        "properties": {
+          "open": {
+            "type": "integer",
+            "title": "Open"
+          },
+          "acknowledged": {
+            "type": "integer",
+            "title": "Acknowledged"
+          },
+          "resolved": {
+            "type": "integer",
+            "title": "Resolved"
+          },
+          "critical_open": {
+            "type": "integer",
+            "title": "Critical Open"
+          },
+          "notifications_enabled": {
+            "type": "boolean",
+            "title": "Notifications Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open",
+          "acknowledged",
+          "resolved",
+          "critical_open",
+          "notifications_enabled"
+        ],
+        "title": "AlertStats"
+      },
+      "AnalysisRequest": {
+        "properties": {
+          "object_path": {
+            "type": "string",
+            "title": "Object Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "object_path"
+        ],
+        "title": "AnalysisRequest"
+      },
+      "AnalysisResult-Input": {
+        "properties": {
+          "object_path": {
+            "type": "string",
+            "title": "Object Path"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "md5": {
+            "type": "string",
+            "title": "Md5"
+          },
+          "hashes": {
+            "$ref": "#/components/schemas/FileHashes"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/FileMetadata"
+          },
+          "signature_match": {
+            "$ref": "#/components/schemas/SignatureMatch"
+          },
+          "yara_matches": {
+            "items": {
+              "$ref": "#/components/schemas/YaraMatch"
+            },
+            "type": "array",
+            "title": "Yara Matches",
+            "default": []
+          },
+          "yara_available": {
+            "type": "boolean",
+            "title": "Yara Available",
+            "default": true
+          },
+          "network_indicators": {
+            "$ref": "#/components/schemas/NetworkIndicators",
+            "default": {
+              "urls": [],
+              "ips": [],
+              "domains": []
+            }
+          },
+          "suspicious_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suspicious Indicators",
+            "default": []
+          },
+          "suspicious_strings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suspicious Strings",
+            "default": []
+          },
+          "strings_sample": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strings Sample",
+            "default": []
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskAssessment"
+          },
+          "behavior": {
+            "$ref": "#/components/schemas/BehaviorProfile",
+            "default": {
+              "available": false,
+              "is_pe": false,
+              "capabilities": [],
+              "narrative": "Behavioral analysis not run.",
+              "pe_summary": {},
+              "import_summary": {}
+            }
+          },
+          "ml": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MLPrediction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "threat_intel": {
+            "$ref": "#/components/schemas/ThreatIntelResult",
+            "default": {
+              "configured": false,
+              "available": false
+            }
+          },
+          "behavioral_analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BehavioralAnalysisResult-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "object_path",
+          "sha256",
+          "md5",
+          "hashes",
+          "metadata",
+          "signature_match",
+          "risk",
+          "notes"
+        ],
+        "title": "AnalysisResult"
+      },
+      "AnalysisResult-Output": {
+        "properties": {
+          "object_path": {
+            "type": "string",
+            "title": "Object Path"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "md5": {
+            "type": "string",
+            "title": "Md5"
+          },
+          "hashes": {
+            "$ref": "#/components/schemas/FileHashes"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/FileMetadata"
+          },
+          "signature_match": {
+            "$ref": "#/components/schemas/SignatureMatch"
+          },
+          "yara_matches": {
+            "items": {
+              "$ref": "#/components/schemas/YaraMatch"
+            },
+            "type": "array",
+            "title": "Yara Matches",
+            "default": []
+          },
+          "yara_available": {
+            "type": "boolean",
+            "title": "Yara Available",
+            "default": true
+          },
+          "network_indicators": {
+            "$ref": "#/components/schemas/NetworkIndicators",
+            "default": {
+              "urls": [],
+              "ips": [],
+              "domains": []
+            }
+          },
+          "suspicious_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suspicious Indicators",
+            "default": []
+          },
+          "suspicious_strings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suspicious Strings",
+            "default": []
+          },
+          "strings_sample": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strings Sample",
+            "default": []
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskAssessment"
+          },
+          "behavior": {
+            "$ref": "#/components/schemas/BehaviorProfile",
+            "default": {
+              "available": false,
+              "is_pe": false,
+              "capabilities": [],
+              "narrative": "Behavioral analysis not run.",
+              "pe_summary": {},
+              "import_summary": {}
+            }
+          },
+          "ml": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MLPrediction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "threat_intel": {
+            "$ref": "#/components/schemas/ThreatIntelResult",
+            "default": {
+              "configured": false,
+              "available": false
+            }
+          },
+          "behavioral_analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BehavioralAnalysisResult-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "object_path",
+          "sha256",
+          "md5",
+          "hashes",
+          "metadata",
+          "signature_match",
+          "risk",
+          "notes"
+        ],
+        "title": "AnalysisResult"
+      },
+      "AnalyticsSummary": {
+        "properties": {
+          "total_samples": {
+            "type": "integer",
+            "title": "Total Samples"
+          },
+          "classified_samples": {
+            "type": "integer",
+            "title": "Classified Samples"
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious"
+          },
+          "benign": {
+            "type": "integer",
+            "title": "Benign"
+          },
+          "detection_rate": {
+            "type": "number",
+            "title": "Detection Rate",
+            "default": 0.0
+          },
+          "last_24h": {
+            "type": "integer",
+            "title": "Last 24H",
+            "default": 0
+          },
+          "avg_risk_score": {
+            "type": "number",
+            "title": "Avg Risk Score",
+            "default": 0.0
+          },
+          "by_level": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Level",
+            "default": {}
+          },
+          "by_verdict": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Verdict",
+            "default": {}
+          },
+          "by_agreement": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Agreement",
+            "default": {}
+          },
+          "top_families": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Top Families",
+            "default": []
+          },
+          "ml_only_catches": {
+            "type": "integer",
+            "title": "Ml Only Catches",
+            "default": 0
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts",
+            "default": 0
+          },
+          "critical_alerts": {
+            "type": "integer",
+            "title": "Critical Alerts",
+            "default": 0
+          },
+          "reports_generated": {
+            "type": "integer",
+            "title": "Reports Generated",
+            "default": 0
+          },
+          "detector_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detector Version"
+          },
+          "classifier_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classifier Version"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_samples",
+          "classified_samples",
+          "malicious",
+          "suspicious",
+          "benign",
+          "generated_at"
+        ],
+        "title": "AnalyticsSummary",
+        "description": "Aggregated analytics for the malware analytics dashboard.\n\nConsolidates detection, alert, report and model data behind a single\nendpoint so the dashboard does not have to stitch together several\nmodule-specific calls on the frontend."
+      },
+      "AuditEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "success"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "action"
+        ],
+        "title": "AuditEvent"
+      },
+      "BehaviorCapability": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "label"
+        ],
+        "title": "BehaviorCapability",
+        "description": "One inferred capability, with the static evidence that raised it."
+      },
+      "BehaviorEvidence": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Evidence source: yara | string | api | network | metadata | signature"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "description": "Human-readable evidence snippet"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Confidence of this single evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "value",
+          "confidence"
+        ],
+        "title": "BehaviorEvidence"
+      },
+      "BehaviorProfile": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": false
+          },
+          "is_pe": {
+            "type": "boolean",
+            "title": "Is Pe",
+            "default": false
+          },
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/BehaviorCapability"
+            },
+            "type": "array",
+            "title": "Capabilities",
+            "default": []
+          },
+          "narrative": {
+            "type": "string",
+            "title": "Narrative",
+            "default": "Behavioral analysis not run."
+          },
+          "pe_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Pe Summary",
+            "default": {}
+          },
+          "import_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Import Summary",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "BehaviorProfile",
+        "description": "Static behavioral-analysis output (Milestone 3 AI Prediction Module).\n\nDerived entirely from imports, PE structure, YARA family tags and\nsuspicious strings -- the file is never executed."
+      },
+      "BehavioralAnalysisRequest": {
+        "properties": {
+          "object_path": {
+            "type": "string",
+            "title": "Object Path",
+            "description": "Stored object path to re-analyse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "object_path"
+        ],
+        "title": "BehavioralAnalysisRequest"
+      },
+      "BehavioralAnalysisResult-Input": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "file_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Hash"
+          },
+          "object_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Path"
+          },
+          "risk_score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score",
+            "description": "Aggregate behavioral risk 0-100"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Risk Level"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Mean confidence across detected behaviors"
+          },
+          "behaviors_detected": {
+            "type": "integer",
+            "title": "Behaviors Detected"
+          },
+          "behaviors_total": {
+            "type": "integer",
+            "title": "Behaviors Total"
+          },
+          "behaviors": {
+            "items": {
+              "$ref": "#/components/schemas/BehavioralFinding"
+            },
+            "type": "array",
+            "title": "Behaviors"
+          },
+          "tactics_summary": {
+            "items": {
+              "$ref": "#/components/schemas/TacticSummary"
+            },
+            "type": "array",
+            "title": "Tactics Summary"
+          },
+          "technique_coverage": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Technique Coverage",
+            "description": "Unique ATT&CK technique IDs observed"
+          },
+          "attack_chain": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attack Chain",
+            "description": "Ordered tactics that were hit (kill-chain order)"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Human-readable summary"
+          },
+          "kill_chain_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kill Chain Stage",
+            "description": "Furthest kill-chain stage reached"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_score",
+          "risk_level",
+          "confidence",
+          "behaviors_detected",
+          "behaviors_total",
+          "behaviors",
+          "tactics_summary",
+          "technique_coverage",
+          "attack_chain",
+          "summary"
+        ],
+        "title": "BehavioralAnalysisResult"
+      },
+      "BehavioralAnalysisResult-Output": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "file_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Hash"
+          },
+          "object_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Path"
+          },
+          "risk_score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score",
+            "description": "Aggregate behavioral risk 0-100"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Risk Level"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Mean confidence across detected behaviors"
+          },
+          "behaviors_detected": {
+            "type": "integer",
+            "title": "Behaviors Detected"
+          },
+          "behaviors_total": {
+            "type": "integer",
+            "title": "Behaviors Total"
+          },
+          "behaviors": {
+            "items": {
+              "$ref": "#/components/schemas/BehavioralFinding"
+            },
+            "type": "array",
+            "title": "Behaviors"
+          },
+          "tactics_summary": {
+            "items": {
+              "$ref": "#/components/schemas/TacticSummary"
+            },
+            "type": "array",
+            "title": "Tactics Summary"
+          },
+          "technique_coverage": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Technique Coverage",
+            "description": "Unique ATT&CK technique IDs observed"
+          },
+          "attack_chain": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attack Chain",
+            "description": "Ordered tactics that were hit (kill-chain order)"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Human-readable summary"
+          },
+          "kill_chain_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kill Chain Stage",
+            "description": "Furthest kill-chain stage reached"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_score",
+          "risk_level",
+          "confidence",
+          "behaviors_detected",
+          "behaviors_total",
+          "behaviors",
+          "tactics_summary",
+          "technique_coverage",
+          "attack_chain",
+          "summary"
+        ],
+        "title": "BehavioralAnalysisResult"
+      },
+      "BehavioralFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable behavior ID, e.g. B001"
+          },
+          "tactic": {
+            "type": "string",
+            "title": "Tactic",
+            "description": "ATT&CK tactic name, e.g. Execution"
+          },
+          "tactic_id": {
+            "type": "string",
+            "title": "Tactic Id",
+            "description": "ATT&CK tactic ID, e.g. TA0002"
+          },
+          "technique": {
+            "type": "string",
+            "title": "Technique",
+            "description": "ATT&CK technique name"
+          },
+          "technique_id": {
+            "type": "string",
+            "title": "Technique Id",
+            "description": "ATT&CK technique ID, e.g. T1059.001"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Short human-readable behavior name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "observed": {
+            "type": "boolean",
+            "title": "Observed",
+            "description": "True if behavior was inferred from static signals"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/BehaviorEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "mitre_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mitre Url"
+          },
+          "risk_contribution": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Risk Contribution",
+            "description": "Points contributed to behavioral risk score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tactic",
+          "tactic_id",
+          "technique",
+          "technique_id",
+          "name",
+          "description",
+          "severity",
+          "confidence",
+          "observed",
+          "risk_contribution"
+        ],
+        "title": "BehavioralFinding"
+      },
+      "Body_analyze_upload_api_v1_behavior_analyze_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_analyze_upload_api_v1_behavior_analyze_post"
+      },
+      "Body_upload_and_scan_api_v1_analysis_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_and_scan_api_v1_analysis_upload_post"
+      },
+      "Body_upload_and_scan_api_v1_files_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_and_scan_api_v1_files_upload_post"
+      },
+      "CategoryScore": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "probability": {
+            "type": "number",
+            "title": "Probability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "probability"
+        ],
+        "title": "CategoryScore"
+      },
+      "ClassificationRequest": {
+        "properties": {
+          "object_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Path"
+          },
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisResult-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "features": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "title": "ClassificationRequest"
+      },
+      "ClassificationResponse": {
+        "properties": {
+          "sample_id": {
+            "type": "string",
+            "title": "Sample Id"
+          },
+          "predicted_class": {
+            "type": "string",
+            "title": "Predicted Class"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "is_malicious": {
+            "type": "boolean",
+            "title": "Is Malicious"
+          },
+          "risk_score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_id",
+          "predicted_class",
+          "confidence",
+          "is_malicious",
+          "risk_score",
+          "severity",
+          "recommendation",
+          "status"
+        ],
+        "title": "ClassificationResponse"
+      },
+      "ConfusionCounts": {
+        "properties": {
+          "tp": {
+            "type": "integer",
+            "title": "Tp",
+            "default": 0
+          },
+          "fp": {
+            "type": "integer",
+            "title": "Fp",
+            "default": 0
+          },
+          "tn": {
+            "type": "integer",
+            "title": "Tn",
+            "default": 0
+          },
+          "fn": {
+            "type": "integer",
+            "title": "Fn",
+            "default": 0
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precision"
+          },
+          "recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy"
+          }
+        },
+        "type": "object",
+        "title": "ConfusionCounts"
+      },
+      "CreateIncidentRequest": {
+        "properties": {
+          "alert_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert Ids"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_ids"
+        ],
+        "title": "CreateIncidentRequest"
+      },
+      "DatasetInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          },
+          "records": {
+            "type": "integer",
+            "title": "Records"
+          },
+          "stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Stats",
+            "default": {}
+          },
+          "exportable": {
+            "type": "boolean",
+            "title": "Exportable",
+            "default": false
+          },
+          "export_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Export Path"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "description",
+          "records"
+        ],
+        "title": "DatasetInfo"
+      },
+      "Detection": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "verdict_label": {
+            "type": "string",
+            "title": "Verdict Label"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "ml_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Probability"
+          },
+          "ml_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Category"
+          },
+          "ml_applicable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Applicable"
+          },
+          "yara_rule_count": {
+            "type": "integer",
+            "title": "Yara Rule Count",
+            "default": 0
+          },
+          "signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "agreement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement"
+          },
+          "analyst": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyst"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "sha256",
+          "filename",
+          "verdict_label",
+          "score",
+          "level"
+        ],
+        "title": "Detection",
+        "description": "One entry in the detection log - written for every analysed file."
+      },
+      "FamilyDetail": {
+        "properties": {
+          "family": {
+            "type": "string",
+            "title": "Family"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious"
+          },
+          "avg_score": {
+            "type": "number",
+            "title": "Avg Score"
+          },
+          "avg_ml_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ml Probability"
+          },
+          "ml_categories": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ml Categories",
+            "default": {}
+          },
+          "signatures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Signatures",
+            "default": []
+          },
+          "first_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen"
+          },
+          "agreement": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Agreement",
+            "default": {}
+          },
+          "avg_yara_rules": {
+            "type": "number",
+            "title": "Avg Yara Rules",
+            "default": 0.0
+          },
+          "recent_samples": {
+            "items": {
+              "$ref": "#/components/schemas/FamilySample"
+            },
+            "type": "array",
+            "title": "Recent Samples",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "family",
+          "samples",
+          "malicious",
+          "suspicious",
+          "avg_score",
+          "first_seen",
+          "last_seen"
+        ],
+        "title": "FamilyDetail"
+      },
+      "FamilySample": {
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "ml_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Probability"
+          },
+          "agreement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sha256",
+          "filename",
+          "verdict",
+          "score",
+          "at"
+        ],
+        "title": "FamilySample"
+      },
+      "FamilySummary": {
+        "properties": {
+          "family": {
+            "type": "string",
+            "title": "Family"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious"
+          },
+          "avg_score": {
+            "type": "number",
+            "title": "Avg Score"
+          },
+          "avg_ml_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ml Probability"
+          },
+          "ml_categories": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ml Categories",
+            "default": {}
+          },
+          "signatures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Signatures",
+            "default": []
+          },
+          "first_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "family",
+          "samples",
+          "malicious",
+          "suspicious",
+          "avg_score",
+          "first_seen",
+          "last_seen"
+        ],
+        "title": "FamilySummary"
+      },
+      "FeedbackRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "model_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Verdict"
+          },
+          "model_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Score"
+          },
+          "ml_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Probability"
+          },
+          "ml_applicable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Applicable"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "agrees": {
+            "type": "boolean",
+            "title": "Agrees",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "sha256",
+          "label"
+        ],
+        "title": "FeedbackRecord"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$",
+            "title": "Sha256"
+          },
+          "label": {
+            "type": "string",
+            "pattern": "^(malicious|benign)$",
+            "title": "Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sha256",
+          "label"
+        ],
+        "title": "FeedbackRequest"
+      },
+      "FeedbackSummary": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "confirmed_malicious": {
+            "type": "integer",
+            "title": "Confirmed Malicious"
+          },
+          "confirmed_benign": {
+            "type": "integer",
+            "title": "Confirmed Benign"
+          },
+          "agreement_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement Rate"
+          },
+          "fused_verdict": {
+            "$ref": "#/components/schemas/ConfusionCounts"
+          },
+          "ml_detector": {
+            "$ref": "#/components/schemas/ConfusionCounts"
+          },
+          "retrain_recommended": {
+            "type": "boolean",
+            "title": "Retrain Recommended"
+          },
+          "retrain_reason": {
+            "type": "string",
+            "title": "Retrain Reason"
+          },
+          "min_samples": {
+            "type": "integer",
+            "title": "Min Samples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "confirmed_malicious",
+          "confirmed_benign",
+          "fused_verdict",
+          "ml_detector",
+          "retrain_recommended",
+          "retrain_reason",
+          "min_samples"
+        ],
+        "title": "FeedbackSummary"
+      },
+      "FileHashes": {
+        "properties": {
+          "md5": {
+            "type": "string",
+            "title": "Md5"
+          },
+          "sha1": {
+            "type": "string",
+            "title": "Sha1"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "md5",
+          "sha1",
+          "sha256"
+        ],
+        "title": "FileHashes",
+        "description": "Cryptographic digests of the uploaded sample."
+      },
+      "FileMetadata": {
+        "properties": {
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes",
+            "description": "File size in bytes."
+          },
+          "file_type": {
+            "type": "string",
+            "title": "File Type",
+            "description": "Human-readable file type from magic bytes."
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Best-effort MIME type from content."
+          },
+          "magic_hex": {
+            "type": "string",
+            "title": "Magic Hex",
+            "description": "Hex of the first bytes of the file."
+          },
+          "extension": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extension",
+            "description": "Declared file extension, lowercased (if the upload name is known)."
+          },
+          "extension_matches_content": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extension Matches Content",
+            "description": "Whether the declared extension is consistent with the detected content type. False is a classic disguise indicator."
+          },
+          "shannon_entropy": {
+            "type": "number",
+            "title": "Shannon Entropy",
+            "description": "Byte entropy in bits/byte (0-8)."
+          },
+          "likely_packed": {
+            "type": "boolean",
+            "title": "Likely Packed",
+            "description": "Heuristic: binary content with high entropy, suggesting packing/encryption."
+          },
+          "printable_ratio": {
+            "type": "number",
+            "title": "Printable Ratio",
+            "description": "Fraction of printable-ASCII bytes."
+          },
+          "likely_text": {
+            "type": "boolean",
+            "title": "Likely Text",
+            "description": "Whether the sample looks like a text file."
+          }
+        },
+        "type": "object",
+        "required": [
+          "size_bytes",
+          "file_type",
+          "mime_type",
+          "magic_hex",
+          "shannon_entropy",
+          "likely_packed",
+          "printable_ratio",
+          "likely_text"
+        ],
+        "title": "FileMetadata",
+        "description": "Static metadata derived from the sample without executing it."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Incident": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "open"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "alert_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert Ids",
+            "default": []
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "title",
+          "severity"
+        ],
+        "title": "Incident"
+      },
+      "IntegrationStatus": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "healthy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Healthy"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "testable": {
+            "type": "boolean",
+            "title": "Testable",
+            "default": false
+          },
+          "stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Stats",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "configured"
+        ],
+        "title": "IntegrationStatus"
+      },
+      "IntegrationTestResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "title": "IntegrationTestResult"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "MLPrediction": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "applicable": {
+            "type": "boolean",
+            "title": "Applicable",
+            "default": false
+          },
+          "malicious": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Malicious"
+          },
+          "malware_probability": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Malware Probability"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "category_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Confidence"
+          },
+          "top_categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryScore"
+            },
+            "type": "array",
+            "title": "Top Categories",
+            "default": []
+          },
+          "model_versions": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Model Versions",
+            "default": {}
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "MLPrediction",
+        "description": "Output of the ML prediction service."
+      },
+      "ManagedUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role"
+        ],
+        "title": "ManagedUser",
+        "description": "A user as seen by an administrator."
+      },
+      "ModelInfo": {
+        "properties": {
+          "detector": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detector"
+          },
+          "classifier": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classifier"
+          },
+          "feature_count": {
+            "type": "integer",
+            "title": "Feature Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature_count"
+        ],
+        "title": "ModelInfo"
+      },
+      "NetworkIndicators": {
+        "properties": {
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Urls",
+            "default": []
+          },
+          "ips": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ips",
+            "default": []
+          },
+          "domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Domains",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "NetworkIndicators"
+      },
+      "Notification": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "alert_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Id"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read",
+            "default": false
+          },
+          "email_sent": {
+            "type": "boolean",
+            "title": "Email Sent",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "category",
+          "severity",
+          "title",
+          "message"
+        ],
+        "title": "Notification"
+      },
+      "NotificationCounts": {
+        "properties": {
+          "unread": {
+            "type": "integer",
+            "title": "Unread"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unread",
+          "total"
+        ],
+        "title": "NotificationCounts"
+      },
+      "PlatformOverview": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "uptime_seconds": {
+            "type": "integer",
+            "title": "Uptime Seconds"
+          },
+          "persistence": {
+            "type": "string",
+            "title": "Persistence"
+          },
+          "auth_mode": {
+            "type": "string",
+            "title": "Auth Mode"
+          },
+          "requests": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Requests"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Totals"
+          },
+          "models": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Models"
+          },
+          "audit_actions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Audit Actions"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "environment",
+          "uptime_seconds",
+          "persistence",
+          "auth_mode",
+          "requests",
+          "totals",
+          "models",
+          "audit_actions",
+          "warnings"
+        ],
+        "title": "PlatformOverview"
+      },
+      "ReportRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "report_type": {
+            "type": "string",
+            "title": "Report Type"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "default": "pdf"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "verdict_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Label"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "report_type",
+          "title"
+        ],
+        "title": "ReportRecord",
+        "description": "One entry in the generated-report history (investigation or summary)."
+      },
+      "ReportResponse": {
+        "properties": {
+          "report_id": {
+            "type": "string",
+            "title": "Report Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "file_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Hash"
+          },
+          "predicted_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted Class"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "is_malicious": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Malicious"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "static_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Static Indicators",
+            "default": []
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "report_id",
+          "status"
+        ],
+        "title": "ReportResponse"
+      },
+      "RiskAssessment": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Aggregate static risk score, 0-100."
+          },
+          "level": {
+            "type": "string",
+            "title": "Level",
+            "description": "low | medium | high"
+          },
+          "classification": {
+            "type": "string",
+            "title": "Classification",
+            "description": "Human-readable verdict."
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "level",
+          "classification",
+          "recommended_action"
+        ],
+        "title": "RiskAssessment"
+      },
+      "RoleChangeRequest": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "RoleChangeRequest"
+      },
+      "SettingsUpdateRequest": {
+        "properties": {
+          "values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "title": "SettingsUpdateRequest"
+      },
+      "SignatureMatch": {
+        "properties": {
+          "matched": {
+            "type": "boolean",
+            "title": "Matched"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matched"
+        ],
+        "title": "SignatureMatch"
+      },
+      "TacticSummary": {
+        "properties": {
+          "tactic": {
+            "type": "string",
+            "title": "Tactic"
+          },
+          "tactic_id": {
+            "type": "string",
+            "title": "Tactic Id"
+          },
+          "detected": {
+            "type": "integer",
+            "title": "Detected"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "max_severity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low",
+                  "info"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tactic",
+          "tactic_id",
+          "detected",
+          "total"
+        ],
+        "title": "TacticSummary"
+      },
+      "ThreatIntelResult": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "default": false
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": false
+          },
+          "malicious": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suspicious"
+          },
+          "undetected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Undetected"
+          },
+          "harmless": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harmless"
+          },
+          "total_engines": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Engines"
+          },
+          "reputation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reputation"
+          },
+          "permalink": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permalink"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "ThreatIntelResult",
+        "description": "Best-effort VirusTotal enrichment, keyed by SHA-256.\n\nInformational only: it never affects the fused verdict score, so a slow\nor unreachable VirusTotal never changes a scan's outcome."
+      },
+      "ThreatSnapshot": {
+        "properties": {
+          "total_detections": {
+            "type": "integer",
+            "title": "Total Detections"
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious"
+          },
+          "benign": {
+            "type": "integer",
+            "title": "Benign"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts"
+          },
+          "last_24h": {
+            "type": "integer",
+            "title": "Last 24H"
+          },
+          "top_families": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Top Families",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_detections",
+          "malicious",
+          "suspicious",
+          "benign",
+          "open_alerts",
+          "last_24h"
+        ],
+        "title": "ThreatSnapshot"
+      },
+      "ThreatStats": {
+        "properties": {
+          "total_detections": {
+            "type": "integer",
+            "title": "Total Detections"
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious"
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious"
+          },
+          "benign": {
+            "type": "integer",
+            "title": "Benign"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts"
+          },
+          "last_24h": {
+            "type": "integer",
+            "title": "Last 24H"
+          },
+          "detection_rate": {
+            "type": "number",
+            "title": "Detection Rate",
+            "default": 0.0
+          },
+          "by_level": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Level",
+            "default": {}
+          },
+          "by_verdict": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Verdict",
+            "default": {}
+          },
+          "by_agreement": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Agreement",
+            "default": {}
+          },
+          "by_family": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "By Family",
+            "default": []
+          },
+          "ml_only_catches": {
+            "type": "integer",
+            "title": "Ml Only Catches",
+            "default": 0
+          },
+          "top_families": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Top Families",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_detections",
+          "malicious",
+          "suspicious",
+          "benign",
+          "open_alerts",
+          "last_24h"
+        ],
+        "title": "ThreatStats",
+        "description": "Richer aggregation backing the threat-tracking dashboard widgets."
+      },
+      "TimelineBucket": {
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          },
+          "malicious": {
+            "type": "integer",
+            "title": "Malicious",
+            "default": 0
+          },
+          "suspicious": {
+            "type": "integer",
+            "title": "Suspicious",
+            "default": 0
+          },
+          "benign": {
+            "type": "integer",
+            "title": "Benign",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket",
+          "label"
+        ],
+        "title": "TimelineBucket",
+        "description": "One aggregated bucket for the threat-activity timeline."
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "TokenResponse"
+      },
+      "UpdateIncidentRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "pattern": "^(open|contained|closed)$",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "UpdateIncidentRequest"
+      },
+      "UpdateProfileRequest": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "title": "UpdateProfileRequest"
+      },
+      "UserProfile": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role"
+        ],
+        "title": "UserProfile"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Verdict": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "malicious | suspicious | benign"
+          },
+          "score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Fused risk score, 0-100."
+          },
+          "level": {
+            "type": "string",
+            "title": "Level",
+            "description": "low | medium | high"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "classification": {
+            "type": "string",
+            "title": "Classification",
+            "description": "Human-readable verdict, e.g. 'Trojan'."
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          },
+          "sources": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sources",
+            "description": "What each engine contributed."
+          },
+          "agreement": {
+            "type": "string",
+            "title": "Agreement",
+            "description": "agree | ml-only | rules-only | conflict"
+          },
+          "novel_threat": {
+            "type": "boolean",
+            "title": "Novel Threat",
+            "description": "True when the ML model alone flagged this sample as malicious, with no matching signature or YARA rule -- an unknown/zero-day-style detection.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "score",
+          "level",
+          "confidence",
+          "classification",
+          "recommended_action",
+          "agreement"
+        ],
+        "title": "Verdict",
+        "description": "The fused final verdict: static rules AND the ML model, combined."
+      },
+      "YaraMatch": {
+        "properties": {
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meta",
+            "default": {}
+          },
+          "matched_strings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Matched Strings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule"
+        ],
+        "title": "YaraMatch"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
+      }
+    }
+  }
+}

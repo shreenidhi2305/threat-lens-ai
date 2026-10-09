@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '../auth/AuthContext';
+import { FeedbackBar } from '../components/FeedbackBar';
 import {
   downloadThreatReport,
   fetchDetections,
@@ -528,6 +529,7 @@ export function ThreatsPage() {
                                   model {d.model_version ?? '—'} · analyst {d.analyst ?? '—'}
                                 </span>
                               </div>
+                              <FeedbackBar detection={d} />
                             </td>
                           </tr>
                         )}

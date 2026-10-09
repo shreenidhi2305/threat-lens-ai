@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AxiosError, CanceledError } from 'axios';
 
 import { useAnalysis } from '../analysis/AnalysisStore';
-import { MAX_UPLOAD_BYTES, uploadSample } from '../lib/api';
+import { MAX_UPLOAD_BYTES, fetchUploadLimit, uploadSample } from '../lib/api';
 import { Button } from '../ui/Button';
 import { UploadIcon } from '../ui/icons';
 
@@ -23,12 +23,22 @@ export function SubmitPage() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // The cap is an administrator-set policy, so ask the API instead of hard-coding it.
+  const [limit, setLimit] = useState(MAX_UPLOAD_BYTES);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchUploadLimit(controller.signal)
+      .then(setLimit)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   // Validate before sending so an oversized file fails instantly instead of after a long upload.
   const choose = (next: File | null) => {
-    if (next && next.size > MAX_UPLOAD_BYTES) {
+    if (next && next.size > limit) {
       setFile(null);
-      setError(`${next.name} is ${bytes(next.size)}. The limit is ${bytes(MAX_UPLOAD_BYTES)}.`);
+      setError(`${next.name} is ${bytes(next.size)}. The limit is ${bytes(limit)}.`);
       return;
     }
     setError(null);
@@ -112,7 +122,7 @@ export function SubmitPage() {
         ) : (
           <>
             <div className="text-sm text-text">Drop a file here, or click to browse</div>
-            <div className="mt-0.5 text-xs text-muted">Up to 32 MB</div>
+            <div className="mt-0.5 text-xs text-muted">Up to {Math.round(limit / 1024 / 1024)} MB</div>
           </>
         )}
       </div>

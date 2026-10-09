@@ -44,6 +44,7 @@ class ThreatMonitoringService:
             family=v.family if v else None,
             ml_probability=ml.malware_probability if ml and ml.available else None,
             ml_category=ml.category if ml and ml.available else None,
+            ml_applicable=ml.applicable if ml and ml.available else None,
             yara_rule_count=len(result.yara_matches),
             signature=result.signature_match.name if result.signature_match.matched else None,
             model_version=(ml.model_versions.get('detector') if ml and ml.available else None),
@@ -58,24 +59,29 @@ class ThreatMonitoringService:
     def _persist(self, detection: Detection) -> None:
         if not settings.supabase_configured:
             return
+        row = {
+            'id': detection.id,
+            'sha256': detection.sha256,
+            'filename': detection.filename,
+            'verdict_label': detection.verdict_label,
+            'score': detection.score,
+            'level': detection.level,
+            'family': detection.family,
+            'ml_probability': detection.ml_probability,
+            'ml_category': detection.ml_category,
+            'yara_rule_count': detection.yara_rule_count,
+            'signature': detection.signature,
+            'model_version': detection.model_version,
+            'agreement': detection.agreement,
+            'analyst_id': detection.analyst,
+            'created_at': detection.at.isoformat(),
+        }
         try:
-            self._repository.create({
-                'id': detection.id,
-                'sha256': detection.sha256,
-                'filename': detection.filename,
-                'verdict_label': detection.verdict_label,
-                'score': detection.score,
-                'level': detection.level,
-                'family': detection.family,
-                'ml_probability': detection.ml_probability,
-                'ml_category': detection.ml_category,
-                'yara_rule_count': detection.yara_rule_count,
-                'signature': detection.signature,
-                'model_version': detection.model_version,
-                'agreement': detection.agreement,
-                'analyst_id': detection.analyst,
-                'created_at': detection.at.isoformat(),
-            })
+            # ml_applicable needs migration 006; fall back without it so logging works before then.
+            try:
+                self._repository.create({**row, 'ml_applicable': detection.ml_applicable})
+            except Exception:
+                self._repository.create(row)
         except Exception:
             # Keep the detection in memory if Supabase is unavailable.
             pass

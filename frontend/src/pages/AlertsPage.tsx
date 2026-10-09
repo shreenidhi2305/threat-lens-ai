@@ -7,12 +7,13 @@ import {
   fetchAlerts,
   fetchIncidents,
   resolveAlert,
+  updateIncidentStatus,
 } from '../lib/api';
-import type { Alert } from '../lib/types';
+import type { Alert, Incident } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
 import { Button } from '../ui/Button';
 import { BellIcon } from '../ui/icons';
-import { Badge, EmptyState, Spinner } from '../ui/primitives';
+import { Badge, EmptyState, Panel, Spinner } from '../ui/primitives';
 
 function ago(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -27,6 +28,9 @@ const STATUS_TONE = {
   acknowledged: 'medium',
   resolved: 'low',
 } as const;
+
+const INCIDENT_TONE = { open: 'high', contained: 'medium', closed: 'low' } as const;
+const INCIDENT_STATES: Incident['status'][] = ['open', 'contained', 'closed'];
 
 export function AlertsPage() {
   const alerts = useAsync((signal) => fetchAlerts(undefined, signal));
@@ -109,6 +113,51 @@ export function AlertsPage() {
             </span>
           )}
         </div>
+      )}
+
+      {incidents.data && incidents.data.length > 0 && (
+        <Panel title={`Incidents · ${incidents.data.length}`}>
+          <ul className="divide-y divide-line-soft">
+            {incidents.data.map((inc: Incident) => (
+              <li
+                key={inc.id}
+                className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-text">{inc.title}</span>
+                    <Badge tone={inc.severity === 'critical' ? 'high' : 'medium'}>{inc.severity}</Badge>
+                    <Badge tone={INCIDENT_TONE[inc.status]}>{inc.status}</Badge>
+                  </div>
+                  <div className="mt-0.5 text-2xs text-muted">
+                    {inc.alert_ids.length} alert(s) ·{' '}
+                    {list
+                      .filter((a) => a.incident_id === inc.id)
+                      .map((a) => a.sample_name)
+                      .join(', ') || 'linked alerts'}{' '}
+                    · opened {ago(inc.created_at)}
+                    {inc.closed_at && ` · closed ${ago(inc.closed_at)}`}
+                  </div>
+                </div>
+                <select
+                  aria-label={`Status of ${inc.title}`}
+                  value={inc.status}
+                  disabled={busy}
+                  onChange={(e) =>
+                    act(() => updateIncidentStatus(inc.id, e.target.value as Incident['status']))
+                  }
+                  className="rounded-md border border-line bg-surface px-2 py-1 text-xs text-text outline-none focus:border-accent disabled:opacity-50"
+                >
+                  {INCIDENT_STATES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
 
       {alerts.loading ? (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useAnalysis } from '../analysis/AnalysisStore';
+import { useAuth } from '../auth/AuthContext';
 import { AnalysisReport } from '../components/AnalysisReport';
 import { downloadAnalysisPdf, downloadSummaryReport, fetchReportHistory } from '../lib/api';
 import type { ReportRecord } from '../lib/types';
@@ -117,6 +118,9 @@ function ReportCenter() {
 
 export function ReportPage() {
   const { result } = useAnalysis();
+  const { user } = useAuth();
+  // SOC members read and report on threats but don't submit files (per the RBAC matrix).
+  const canSubmit = user?.role !== 'SOC Team Member';
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -142,11 +146,21 @@ export function ReportPage() {
         <EmptyState
           icon={<FileScanIcon />}
           title="No report to show"
-          description="Submit a file for static analysis and its report will open here."
+          description={
+            canSubmit
+              ? 'Submit a file for static analysis and its report will open here.'
+              : 'Generate a threat summary above, or open the Threat Monitor to download a filtered monitoring report.'
+          }
           action={
-            <Link to="/submit">
-              <Button>Submit a file</Button>
-            </Link>
+            canSubmit ? (
+              <Link to="/submit">
+                <Button>Submit a file</Button>
+              </Link>
+            ) : (
+              <Link to="/threats">
+                <Button variant="secondary">Open Threat Monitor</Button>
+              </Link>
+            )
           }
         />
       ) : (

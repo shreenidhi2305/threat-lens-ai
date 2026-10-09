@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import Response
 
 from app.core.dependencies import CurrentUser, require_roles
+from app.modules.audit.service import audit_service
 from app.modules.reports.schemas import ReportRecord, ReportResponse
 from app.modules.file_analysis.schemas import AnalysisResult
 from app.modules.reports.pdf import render_analysis_pdf, render_summary_pdf
@@ -16,6 +17,7 @@ _REPORT_ROLES = ('Security Analyst', 'SOC Team Member', 'Administrator', 'Resear
 @router.post('/pdf')
 def download_pdf(
     result: AnalysisResult,
+    request: Request,
     user: CurrentUser = Depends(require_roles(*_REPORT_ROLES)),
 ) -> Response:
     """Render the client-held analysis result without reading the uploaded sample."""
@@ -30,6 +32,7 @@ def download_pdf(
         verdict_label=result.verdict.label if result.verdict else None,
         risk_score=result.verdict.score if result.verdict else result.risk.score,
     )
+    audit_service.record_request(request, 'report.pdf', user=user, target=result.hashes.sha256, detail=safe_name)
     return Response(
         content=render_analysis_pdf(result),
         media_type='application/pdf',
@@ -39,6 +42,7 @@ def download_pdf(
 
 @router.post('/summary')
 def download_summary_pdf(
+    request: Request,
     user: CurrentUser = Depends(require_roles(*_REPORT_ROLES)),
     window: str = Query('7d', pattern='^(24h|7d|30d)$'),
 ) -> Response:
@@ -51,6 +55,7 @@ def download_summary_pdf(
         created_by=user.user_id,
         window=window,
     )
+    audit_service.record_request(request, 'report.summary', user=user, detail=f'window {window}')
     return Response(
         content=render_summary_pdf(stats, timeline, window, generated_by=user.user_id),
         media_type='application/pdf',

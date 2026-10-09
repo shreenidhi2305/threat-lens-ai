@@ -3,18 +3,13 @@ import logging
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.modules.auth.schemas import TokenResponse
+from app.modules.users.service import user_service
 
 logger = logging.getLogger(__name__)
 
-# Local-development login shortcut used only when Supabase is not configured.
-# The email prefix selects the role so RBAC can be exercised without a database.
-_DEV_ROLE_BY_EMAIL: dict[str, str] = {
-    'analyst': 'Security Analyst',
-    'soc': 'SOC Team Member',
-    'admin': 'Administrator',
-    'researcher': 'Researcher',
-}
-_DEV_DEFAULT_ROLE = 'Security Analyst'
+
+class AuthNotConfiguredError(RuntimeError):
+    """No identity provider is configured and the dev login is disabled."""
 
 
 class AuthService:
@@ -48,8 +43,11 @@ class AuthService:
         return TokenResponse(access_token=token)
 
     def _dev_login(self, email: str) -> TokenResponse:
-        prefix = email.split('@', 1)[0].lower()
-        role = _DEV_ROLE_BY_EMAIL.get(prefix, _DEV_DEFAULT_ROLE)
+        """Local-development login: any password; the role comes from the user directory."""
+        if not settings.dev_login_enabled:
+            raise AuthNotConfiguredError('Authentication is not configured on this server')
+        email = email.strip().lower()
+        role = user_service.dev_login_role(email)
         logger.warning('Supabase not configured; issuing dev token for %s as %s', email, role)
         token = create_access_token(subject=email, roles=[role])
         return TokenResponse(access_token=token)

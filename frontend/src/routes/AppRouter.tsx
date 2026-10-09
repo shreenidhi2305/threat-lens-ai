@@ -8,6 +8,10 @@ import { Spinner } from '../ui/primitives';
 
 // Each page is its own chunk, so the first paint only downloads the shell plus the
 // page being opened instead of the whole app.
+const AdminPage = lazy(() => import('../pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+const ResearchPage = lazy(() =>
+  import('../pages/ResearchPage').then((m) => ({ default: m.ResearchPage })),
+);
 const AlertsPage = lazy(() => import('../pages/AlertsPage').then((m) => ({ default: m.AlertsPage })));
 const AnalyticsPage = lazy(() =>
   import('../pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
@@ -62,6 +66,8 @@ export function AppRouter() {
             <Route path="/threats" element={<ThreatsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/research" element={<ResearchPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
