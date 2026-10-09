@@ -126,11 +126,43 @@ def test_development_only_warns():
 
 
 def test_dev_login_can_be_explicitly_allowed_in_production():
+    # open dev login (any password) is never acceptable in production ...
     errors, _ = find_problems(_cfg(APP_ENV="production", ALLOW_DEV_LOGIN=True, JWT_SECRET_KEY=STRONG))
-    assert any("dev login" in e for e in errors)  # still reported, but it is the operator's call
+    assert any("dev login" in e and "DEV_LOGIN_PASSWORD" in e for e in errors)
     assert _cfg(APP_ENV="production", ALLOW_DEV_LOGIN=True).dev_login_enabled is True
     assert _cfg(APP_ENV="production").dev_login_enabled is False
     assert _cfg(APP_ENV="development").dev_login_enabled is True
+
+
+def test_password_gated_demo_mode_is_allowed_in_production():
+    base = dict(APP_ENV="production", ALLOW_DEV_LOGIN=True, JWT_SECRET_KEY=STRONG,
+                CORS_ALLOW_ORIGINS="https://demo.example.com", RATE_LIMIT_ENABLED=True)
+    errors, warnings = find_problems(_cfg(DEV_LOGIN_PASSWORD="a-long-shared-secret", **base))
+    assert errors == []
+    assert any("Demo mode" in w for w in warnings)  # still flagged, but it can boot
+    validate_settings(_cfg(DEV_LOGIN_PASSWORD="a-long-shared-secret", **base))
+
+    errors, _ = find_problems(_cfg(DEV_LOGIN_PASSWORD="short", **base))
+    assert any("at least 12" in e for e in errors)
+
+
+def test_shared_password_gates_the_dev_login(monkeypatch):
+    c = TestClient(app)
+    cfg = c.get("/api/v1/auth/config").json()
+    assert cfg == {"mode": "dev", "dev_login": True, "password_required": False}
+
+    monkeypatch.setattr(settings, "DEV_LOGIN_PASSWORD", "correct-horse-battery")
+    assert c.get("/api/v1/auth/config").json()["password_required"] is True
+    wrong = c.post("/api/v1/auth/login", json={"email": "admin@local", "password": "demo"})
+    assert wrong.status_code == 401
+    right = c.post("/api/v1/auth/login", json={"email": "admin@local", "password": "correct-horse-battery"})
+    assert right.status_code == 200 and right.json()["access_token"]
+
+
+def test_auth_config_reports_a_disabled_dev_login(monkeypatch):
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    cfg = TestClient(app).get("/api/v1/auth/config").json()
+    assert cfg["dev_login"] is False
 
 
 def test_dev_login_is_disabled_in_production(monkeypatch):

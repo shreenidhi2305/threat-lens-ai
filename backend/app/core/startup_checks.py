@@ -26,10 +26,18 @@ def find_problems(cfg: Settings) -> tuple[list[str], list[str]]:
             'anyone could forge sign-in tokens.'
         )
     if not cfg.supabase_configured:
-        if cfg.dev_login_enabled:
+        if cfg.dev_login_enabled and cfg.dev_login_password_required:
+            if cfg.is_production and len(cfg.DEV_LOGIN_PASSWORD) < 12:
+                errors.append('DEV_LOGIN_PASSWORD must be at least 12 characters.')
+            warnings.append(
+                'Demo mode: no identity provider is configured, so everyone signs in with the shared '
+                'DEV_LOGIN_PASSWORD. Do not use this with real data.'
+            )
+        elif cfg.dev_login_enabled:
             (errors if cfg.is_production else warnings).append(
                 'No identity provider is configured, so the dev login '
                 '(any email, any password) is active.'
+                + (' Set DEV_LOGIN_PASSWORD to gate a demo deployment.' if cfg.is_production else '')
             )
         else:
             errors.append(
@@ -38,7 +46,10 @@ def find_problems(cfg: Settings) -> tuple[list[str], list[str]]:
             )
     if cfg.is_production:
         origins = cfg.cors_origins
-        if not origins or all('localhost' in o or '127.0.0.1' in o for o in origins):
+        # Behind the bundled nginx proxy the UI and API share one origin, so CORS is irrelevant.
+        if not cfg.TRUST_PROXY_HEADERS and (
+            not origins or all('localhost' in o or '127.0.0.1' in o for o in origins)
+        ):
             warnings.append(
                 'CORS_ALLOW_ORIGINS only lists localhost; the deployed frontend will be blocked.'
             )

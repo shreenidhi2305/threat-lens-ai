@@ -1,3 +1,4 @@
+import hmac
 import logging
 
 from app.core.config import settings
@@ -15,7 +16,7 @@ class AuthNotConfiguredError(RuntimeError):
 class AuthService:
     def login(self, email: str, password: str) -> TokenResponse:
         if not settings.supabase_configured:
-            return self._dev_login(email)
+            return self._dev_login(email, password)
         return self._supabase_login(email, password)
 
     def _supabase_login(self, email: str, password: str) -> TokenResponse:
@@ -42,10 +43,18 @@ class AuthService:
         token = create_access_token(subject=user.id, roles=[role_name])
         return TokenResponse(access_token=token)
 
-    def _dev_login(self, email: str) -> TokenResponse:
-        """Local-development login: any password; the role comes from the user directory."""
+    def _dev_login(self, email: str, password: str = '') -> TokenResponse:
+        """Dev/demo login: the role comes from the user directory.
+
+        Any password is accepted unless ``DEV_LOGIN_PASSWORD`` is set, in which case that shared
+        password is required (so a publicly reachable demo is not open to everyone).
+        """
         if not settings.dev_login_enabled:
             raise AuthNotConfiguredError('Authentication is not configured on this server')
+        if settings.dev_login_password_required and not hmac.compare_digest(
+            password.encode(), settings.DEV_LOGIN_PASSWORD.encode()
+        ):
+            raise ValueError('Invalid credentials')
         email = email.strip().lower()
         role = user_service.dev_login_role(email)
         logger.warning('Supabase not configured; issuing dev token for %s as %s', email, role)

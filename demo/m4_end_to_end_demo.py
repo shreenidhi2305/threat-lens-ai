@@ -9,6 +9,7 @@ dashboard and proves each feature against the live server.
     python demo/m4_end_to_end_demo.py --pause         # wait for Enter between sections
     python demo/m4_end_to_end_demo.py --rate-limit    # also trip the login rate limiter (last step)
     python demo/m4_end_to_end_demo.py --api http://localhost:8000/api/v1
+    python demo/m4_end_to_end_demo.py --api http://localhost:8080/api/v1 --password <shared password>
 
 Needs the backend running with the local dev login (no Supabase) and `requests`.
 Real malware is streamed into memory from DikeDataset (MIT) and posted straight to the
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import os
 import sys
 import time
 from pathlib import Path
@@ -50,8 +52,9 @@ STATIC_SAMPLES = [
 
 
 class Demo:
-    def __init__(self, api: str, pause: bool) -> None:
+    def __init__(self, api: str, pause: bool, password: str = 'demo') -> None:
         self.api = api.rstrip('/')
+        self.password = password
         self.pause = pause
         self.tokens: dict[str, str] = {}
         self.checks = 0
@@ -77,7 +80,7 @@ class Demo:
     def token(self, who: str) -> str:
         if who not in self.tokens:
             r = requests.post(
-                f'{self.api}/auth/login', json={'email': ROLES[who], 'password': 'demo'}, timeout=15
+                f'{self.api}/auth/login', json={'email': ROLES[who], 'password': self.password}, timeout=15
             )
             r.raise_for_status()
             self.tokens[who] = r.json()['access_token']
@@ -312,12 +315,14 @@ class Demo:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--api', default='http://127.0.0.1:8000/api/v1')
+    parser.add_argument('--password', default=os.environ.get('THREATLENS_PASSWORD', 'demo'),
+                        help='sign-in password (the shared DEV_LOGIN_PASSWORD on a gated demo server)')
     parser.add_argument('--skip-real', action='store_true', help='skip the real PE samples (needs internet)')
     parser.add_argument('--pause', action='store_true', help='wait for Enter between sections')
     parser.add_argument('--rate-limit', action='store_true', help='also demonstrate the login rate limit (run last)')
     args = parser.parse_args()
 
-    demo = Demo(args.api, args.pause)
+    demo = Demo(args.api, args.pause, args.password)
     try:
         demo.health_and_auth()
         demo.static_analysis()

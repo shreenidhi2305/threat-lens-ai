@@ -10,9 +10,9 @@ ThreatLens AI is a full-stack cybersecurity platform for static malware analysis
 
 **Milestone 3 (Weeks 5-6): complete.** MITRE ATT&CK behavioral analysis (static inference only), VirusTotal threat-intel lookups, threat-prediction reports, the analytics dashboard, in-app notifications, and the investigation / summary / monitoring PDF reports.
 
-**Milestone 4 (Weeks 7-8): in progress.**
+**Milestone 4 (Weeks 7-8): complete pending the live deployment run.**
 - Done: workflow validation (`docs/TEST_PLAN_AND_VALIDATION.md`), UI responsiveness and performance work, the full **Administrator console** (users and roles, settings and security policies, integrations, activity log, ML model management), API-gateway **rate limiting**, **SIEM/SOAR** webhook integration, an analyst **feedback loop** with model-drift detection, the **Researcher workspace** (datasets and malware families), incident tracking, persistent alerts/incidents, production start-up safety checks, API docs and a Postman collection, and an end-to-end demo driver.
-- Remaining: production container images and the cloud deployment.
+- Deployment: production Docker images (nginx + API), a compose stack with an optional free public tunnel, a password-gated demo mode that needs no accounts, and CI that builds and smoke-tests the images (`docs/DEPLOYMENT.md`).
 
 ## Quick start (local, no database needed)
 
@@ -118,15 +118,17 @@ Database setup: apply `supabase/migrations/001` to `006` in order (`supabase/REA
 - OpenAPI spec: `docs/openapi.json`; Postman collection: `docs/postman/ThreatLens.postman_collection.json`
 - Regenerate both: `cd backend && PYTHONPATH=. python scripts/export_api_docs.py`
 
-## Docker
+## Docker and deployment
 
 ```bash
-cp .env.example .env
-docker compose up --build
+python deploy/make_env.py --demo     # safe .env + a demo sign-in password (no accounts needed)
+docker compose up --build -d         # UI + API at http://localhost:8080
+docker compose --profile public up -d   # optional: free temporary public URL
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
+Production images (nginx + API), a real-deployment path with Supabase, the security guard rails and
+troubleshooting are in `docs/DEPLOYMENT.md`. CI (`.github/workflows/ci.yml`) builds and smoke-tests
+both images on every push.
 
 ## Contribution workflow
 

@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     APP_ENV: str = 'development'
     # Escape hatch for demo deployments with no identity provider (never for real data).
     ALLOW_DEV_LOGIN: bool = False
+    # When set, the dev login only accepts this shared password (use it for any demo that is
+    # reachable by other people, e.g. a public tunnel). Empty = any password (local dev only).
+    DEV_LOGIN_PASSWORD: str = ''
     # Honour X-Forwarded-For when running behind a reverse proxy / load balancer.
     TRUST_PROXY_HEADERS: bool = False
 
@@ -86,6 +89,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.APP_ENV.strip().lower() == 'production'
+
+    @property
+    def dev_login_password_required(self) -> bool:
+        return bool(self.DEV_LOGIN_PASSWORD)
 
     @property
     def dev_login_enabled(self) -> bool:

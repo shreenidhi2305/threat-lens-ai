@@ -1,5 +1,11 @@
 import type { UserRole } from './types';
 
+export interface AuthConfig {
+  mode: 'supabase' | 'dev';
+  dev_login: boolean;
+  password_required: boolean;
+}
+
 // --- Milestone 4: administration, feedback and research -----------------------
 
 export interface ManagedUser {

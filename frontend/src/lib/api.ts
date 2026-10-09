@@ -3,6 +3,7 @@ import axios from 'axios';
 import type {
   AdminModels,
   AuditEvent,
+  AuthConfig,
   DatasetInfo,
   FamilyDetail,
   FamilySummary,
@@ -69,6 +70,9 @@ export const login = async (email: string, password: string): Promise<string> =>
   setToken(data.access_token);
   return data.access_token;
 };
+
+export const fetchAuthConfig = async (signal?: AbortSignal): Promise<AuthConfig> =>
+  (await api.get<AuthConfig>('/auth/config', { signal })).data;
 
 export const fetchProfile = async (): Promise<UserProfile> => {
   const { data } = await api.get<UserProfile>('/users/me');

@@ -155,6 +155,8 @@ As **admin**: **Admin Console**.
 - **Profile**: edit your display name; the permission list matches the role.
 - Terminal: `cd backend && python -m pytest -q` → all tests pass.
 - `http://localhost:8000/docs` and `docs/postman/` for the API.
+- Deployment: `docker compose up --build -d` serves the production images (nginx + API) on one port;
+  `docker compose --profile public up -d` adds a free temporary public URL. See `docs/DEPLOYMENT.md`.
 
 ---
 

@@ -2,12 +2,23 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request, status
 
+from app.core.config import settings
 from app.modules.audit.service import audit_service
 from app.modules.auth.schemas import LoginRequest, TokenResponse
 from app.modules.auth.service import AuthNotConfiguredError, auth_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get('/config')
+def auth_config() -> dict:
+    """Public: how sign-in works on this server, so the login page can describe it honestly."""
+    return {
+        'mode': 'supabase' if settings.supabase_configured else 'dev',
+        'dev_login': settings.dev_login_enabled and not settings.supabase_configured,
+        'password_required': (not settings.supabase_configured) and settings.dev_login_password_required,
+    }
 
 
 @router.post('/login', response_model=TokenResponse)

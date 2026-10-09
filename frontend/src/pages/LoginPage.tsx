@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import { fetchAuthConfig } from '../lib/api';
+import type { AuthConfig } from '../lib/adminTypes';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
 import { ShieldIcon } from '../ui/icons';
@@ -20,6 +22,22 @@ export function LoginPage() {
   const [password, setPassword] = useState('demo');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // How this server signs people in: real accounts, an open dev login, or a password-gated demo.
+  const [config, setConfig] = useState<AuthConfig | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchAuthConfig(controller.signal)
+      .then((c) => {
+        setConfig(c);
+        if (c.password_required) setPassword('');
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  const showDemo = config?.dev_login ?? true;
+  const passwordRequired = config?.password_required ?? false;
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -31,7 +49,11 @@ export function LoginPage() {
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch {
-      setError('Sign in failed. Check the address and that the API is reachable.');
+      setError(
+        passwordRequired
+          ? 'Sign in failed. Check the email and the shared access password.'
+          : 'Sign in failed. Check the address and that the API is reachable.',
+      );
     } finally {
       setBusy(false);
     }
@@ -104,9 +126,10 @@ export function LoginPage() {
             </Button>
           </form>
 
+          {showDemo && (
           <div className="mt-6 rounded-md border border-line-soft bg-surface p-3">
             <p className="mb-2 text-2xs font-medium uppercase tracking-[0.06em] text-muted">
-              Demo accounts · any password
+              {passwordRequired ? 'Demo accounts · shared access password' : 'Demo accounts · any password'}
             </p>
             <ul className="space-y-1 text-xs">
               {DEMO_LOGINS.map(([addr, role]) => (
@@ -123,6 +146,7 @@ export function LoginPage() {
               ))}
             </ul>
           </div>
+          )}
         </div>
       </div>
     </div>
