@@ -6,6 +6,7 @@ In-memory store for now (process lifetime). Persistent schema lives in
 
 from __future__ import annotations
 
+import threading
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
@@ -24,6 +25,8 @@ class AlertsService:
     def __init__(self) -> None:
         self._alerts: OrderedDict[str, Alert] = OrderedDict()
         self._incidents: OrderedDict[str, Incident] = OrderedDict()
+        # Scans run on worker threads, so the dedupe-then-insert below must be atomic.
+        self._lock = threading.RLock()
 
     # --- generation --------------------------------------------------------
     def evaluate(
@@ -38,30 +41,32 @@ class AlertsService:
             return None
 
         sha = result.hashes.sha256
-        for existing in self._alerts.values():
-            if existing.sample_sha256 == sha and existing.status != 'resolved':
-                return existing  # dedupe: one live alert per sample
-
         severity = 'critical' if (verdict.score >= 85 or result.signature_match.matched) else 'high'
-        alert = Alert(
-            id=str(uuid.uuid4()),
-            created_at=datetime.now(timezone.utc),
-            severity=severity,
-            status='open',
-            title=f'{verdict.classification}',
-            sample_sha256=sha,
-            sample_name=result.object_path.split('/')[-1] or result.object_path,
-            verdict_label=verdict.label,
-            verdict_score=verdict.score,
-            category=verdict.family,
-            agreement=verdict.agreement,
-            detection_id=detection_id,
-            created_by=actor,
-        )
+        with self._lock:
+            for existing in self._alerts.values():
+                if existing.sample_sha256 == sha and existing.status != 'resolved':
+                    return existing  # dedupe: one live alert per sample
+
+            alert = Alert(
+                id=str(uuid.uuid4()),
+                created_at=datetime.now(timezone.utc),
+                severity=severity,
+                status='open',
+                title=f'{verdict.classification}',
+                sample_sha256=sha,
+                sample_name=result.object_path.split('/')[-1] or result.object_path,
+                verdict_label=verdict.label,
+                verdict_score=verdict.score,
+                category=verdict.family,
+                agreement=verdict.agreement,
+                detection_id=detection_id,
+                created_by=actor,
+            )
+            self._alerts[alert.id] = alert
+            while len(self._alerts) > _MAX_ALERTS:
+                self._alerts.popitem(last=False)
+        # SMTP is slow network I/O: do it outside the lock.
         alert.notified = send_email(alert)
-        self._alerts[alert.id] = alert
-        while len(self._alerts) > _MAX_ALERTS:
-            self._alerts.popitem(last=False)
         notifications_service.notify(
             category='alert',
             severity=severity,
@@ -94,12 +99,13 @@ class AlertsService:
 
     # --- transitions ----------------------------------------------------
     def set_status(self, alert_id: str, status: str, note: str | None = None) -> Alert | None:
-        alert = self._alerts.get(alert_id)
-        if alert is None:
-            return None
-        alert.status = status
-        if note:
-            alert.note = note
+        with self._lock:
+            alert = self._alerts.get(alert_id)
+            if alert is None:
+                return None
+            alert.status = status
+            if note:
+                alert.note = note
         notifications_service.notify(
             category='status',
             severity='info',
@@ -111,23 +117,24 @@ class AlertsService:
 
     # --- incidents ------------------------------------------------------
     def create_incident(self, alert_ids: list[str], title: str | None) -> Incident | None:
-        linked = [self._alerts[a] for a in alert_ids if a in self._alerts]
-        if not linked:
-            return None
-        severity = 'critical' if any(a.severity == 'critical' for a in linked) else 'high'
-        incident = Incident(
-            id=str(uuid.uuid4()),
-            created_at=datetime.now(timezone.utc),
-            title=title or linked[0].title,
-            status='open',
-            severity=severity,
-            alert_ids=[a.id for a in linked],
-        )
-        self._incidents[incident.id] = incident
-        for a in linked:
-            a.incident_id = incident.id
-            if a.status == 'open':
-                a.status = 'acknowledged'
+        with self._lock:
+            linked = [self._alerts[a] for a in alert_ids if a in self._alerts]
+            if not linked:
+                return None
+            severity = 'critical' if any(a.severity == 'critical' for a in linked) else 'high'
+            incident = Incident(
+                id=str(uuid.uuid4()),
+                created_at=datetime.now(timezone.utc),
+                title=title or linked[0].title,
+                status='open',
+                severity=severity,
+                alert_ids=[a.id for a in linked],
+            )
+            self._incidents[incident.id] = incident
+            for a in linked:
+                a.incident_id = incident.id
+                if a.status == 'open':
+                    a.status = 'acknowledged'
         notifications_service.notify(
             category='incident',
             severity=incident.severity,

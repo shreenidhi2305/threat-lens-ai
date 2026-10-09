@@ -85,7 +85,7 @@ export function DashboardPage() {
     user?.role === 'Security Analyst' || user?.role === 'Administrator' || user?.role === 'Researcher';
 
   const snapshot = useAsync(fetchThreatSnapshot);
-  const detections = useAsync(() => fetchDetections(12));
+  const detections = useAsync((signal) => fetchDetections(12, {}, signal));
 
   const s = snapshot.data;
 
@@ -111,7 +111,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Files analysed" value={s?.total_detections ?? '—'} />
         <Stat
           label="Malicious"

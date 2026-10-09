@@ -10,6 +10,7 @@ import {
 } from '../lib/api';
 import type { Detection, RiskLevel, UserRole } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
+import { usePolling } from '../lib/usePolling';
 import { RadarIcon } from '../ui/icons';
 import { Badge, EmptyState, Panel, Spinner, Stat } from '../ui/primitives';
 
@@ -50,6 +51,10 @@ function toCsv(rows: Detection[]): string {
   return [head.join(','), ...lines].join('\n');
 }
 
+// Rows rendered at once. The API can return up to 500; painting them all makes the
+// page sluggish, so show a page at a time and let the user ask for more.
+const PAGE_SIZE = 100;
+
 const REPORT_ROLES: UserRole[] = ['Security Analyst', 'SOC Team Member', 'Administrator'];
 
 const selectCls =
@@ -68,6 +73,9 @@ export function ThreatsPage() {
   const [window, setWindow] = useState<WindowKey>('24h');
   const [threatsOnly, setThreatsOnly] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // How many rows to paint, tied to the filter set it was chosen for: changing any
+  // filter naturally falls back to the first page without an effect.
+  const [page, setPage] = useState({ key: '', count: PAGE_SIZE });
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
@@ -77,29 +85,29 @@ export function ThreatsPage() {
   }, [q]);
 
   const stats = useAsync(fetchThreatStats);
-  const timeline = useAsync(() => fetchThreatTimeline(window), [window]);
+  const timeline = useAsync((signal) => fetchThreatTimeline(window, signal), [window]);
   const families = useAsync(fetchThreatFamilies);
   const detections = useAsync(
-    () =>
-      fetchDetections(500, {
-        level: level || undefined,
-        verdict: verdict || undefined,
-        family: family || undefined,
-        q: debouncedQ || undefined,
-      }),
+    (signal) =>
+      fetchDetections(
+        500,
+        {
+          level: level || undefined,
+          verdict: verdict || undefined,
+          family: family || undefined,
+          q: debouncedQ || undefined,
+        },
+        signal,
+      ),
     [level, verdict, family, debouncedQ],
   );
 
-  // Auto-refresh every 15s for real-time monitoring.
-  useEffect(() => {
-    const id = setInterval(() => {
-      stats.reload();
-      timeline.reload();
-      detections.reload();
-    }, 15000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Auto-refresh every 15s for real-time monitoring. Pauses while the tab is hidden.
+  usePolling(() => {
+    stats.reload();
+    timeline.reload();
+    detections.reload();
+  }, 15000);
 
   const reloadAll = (): void => {
     stats.reload();
@@ -113,6 +121,9 @@ export function ThreatsPage() {
     if (!threatsOnly) return all;
     return all.filter((d) => d.verdict_label !== 'benign');
   }, [detections.data, threatsOnly]);
+
+  const filterKey = [level, verdict, family, debouncedQ, threatsOnly].join('|');
+  const visibleCount = page.key === filterKey ? page.count : PAGE_SIZE;
 
   const s = stats.data;
   const buckets = timeline.data ?? [];
@@ -229,7 +240,7 @@ export function ThreatsPage() {
         />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Total" value={s?.total_detections ?? '—'} />
             <Stat
               label="Malicious"
@@ -366,7 +377,8 @@ export function ThreatsPage() {
             title="Threat feed"
             aside={
               <span className="text-2xs text-muted">
-                {rows.length} shown · ML-only {s?.ml_only_catches ?? 0}
+                {Math.min(visibleCount, rows.length)} of {rows.length} shown · ML-only{' '}
+                {s?.ml_only_catches ?? 0}
               </span>
             }
           >
@@ -451,7 +463,10 @@ export function ThreatsPage() {
                 description="Adjust filters or submit a file — flagged verdicts surface here."
               />
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-line-soft">
+              <div
+                className="overflow-x-auto rounded-lg border border-line-soft"
+                aria-busy={detections.refreshing}
+              >
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-line-soft text-left text-2xs uppercase tracking-[0.06em] text-muted">
@@ -463,7 +478,7 @@ export function ThreatsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-soft">
-                    {rows.map((d) => (
+                    {rows.slice(0, visibleCount).map((d) => (
                       <Fragment key={d.id}>
                         <tr
                           onClick={() => setExpanded(expanded === d.id ? null : d.id)}
@@ -520,6 +535,17 @@ export function ThreatsPage() {
                     ))}
                   </tbody>
                 </table>
+                {rows.length > visibleCount && (
+                  <div className="border-t border-line-soft p-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setPage({ key: filterKey, count: visibleCount + PAGE_SIZE })}
+                      className="rounded-md px-3 py-1.5 text-xs text-accent hover:bg-surface-raised"
+                    >
+                      Show {Math.min(PAGE_SIZE, rows.length - visibleCount)} more
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </Panel>

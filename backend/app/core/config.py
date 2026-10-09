@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     VIRUSTOTAL_API_KEY: str = ''
     VIRUSTOTAL_TIMEOUT_SECONDS: float = 4.0
 
+    # Performance tuning.
+    # Max scans running at once (each holds the whole file in memory and is CPU-heavy).
+    MAX_CONCURRENT_SCANS: int = 2
+    # Requests slower than this are logged as warnings by the timing middleware.
+    SLOW_REQUEST_SECONDS: float = 1.0
+
     # Comma-separated list of origins allowed to call the API from a browser.
     CORS_ALLOW_ORIGINS: str = 'http://localhost:5173,http://127.0.0.1:5173'
 

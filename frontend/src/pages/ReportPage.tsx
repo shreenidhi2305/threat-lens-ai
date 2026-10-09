@@ -36,7 +36,7 @@ function when(iso: string): string {
 }
 
 function ReportCenter() {
-  const history = useAsync(() => fetchReportHistory(20));
+  const history = useAsync((signal) => fetchReportHistory(20, signal));
   const [window_, setWindow] = useState<(typeof WINDOWS)[number]>('7d');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);

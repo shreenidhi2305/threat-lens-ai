@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AxiosError } from 'axios';
+import { AxiosError, CanceledError } from 'axios';
 
 import { useAnalysis } from '../analysis/AnalysisStore';
-import { uploadSample } from '../lib/api';
+import { MAX_UPLOAD_BYTES, uploadSample } from '../lib/api';
 import { Button } from '../ui/Button';
 import { UploadIcon } from '../ui/icons';
 
@@ -20,26 +20,53 @@ export function SubmitPage() {
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Validate before sending so an oversized file fails instantly instead of after a long upload.
+  const choose = (next: File | null) => {
+    if (next && next.size > MAX_UPLOAD_BYTES) {
+      setFile(null);
+      setError(`${next.name} is ${bytes(next.size)}. The limit is ${bytes(MAX_UPLOAD_BYTES)}.`);
+      return;
+    }
+    setError(null);
+    setFile(next);
+  };
 
   const run = async () => {
     if (!file) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setBusy(true);
+    setProgress(0);
     setError(null);
     try {
-      const result = await uploadSample(file);
+      const result = await uploadSample(file, {
+        onProgress: setProgress,
+        signal: controller.signal,
+      });
       commit(result);
       navigate('/reports');
     } catch (err) {
-      setError(
-        err instanceof AxiosError
-          ? String(err.response?.data?.detail ?? err.message)
-          : 'Upload failed',
-      );
+      if (err instanceof CanceledError) {
+        setError('Analysis cancelled.');
+      } else {
+        setError(
+          err instanceof AxiosError
+            ? String(err.response?.data?.detail ?? err.message)
+            : 'Upload failed',
+        );
+      }
     } finally {
+      abortRef.current = null;
       setBusy(false);
     }
   };
+
+  const cancel = () => abortRef.current?.abort();
+  const sent = busy && progress >= 100;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
@@ -61,7 +88,7 @@ export function SubmitPage() {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          setFile(e.dataTransfer.files[0] ?? null);
+          choose(e.dataTransfer.files[0] ?? null);
         }}
         role="button"
         tabIndex={0}
@@ -74,7 +101,7 @@ export function SubmitPage() {
           ref={inputRef}
           type="file"
           className="hidden"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => choose(e.target.files?.[0] ?? null)}
         />
         <UploadIcon className="mb-3 text-2xl text-muted" />
         {file ? (
@@ -96,13 +123,37 @@ export function SubmitPage() {
         </div>
       )}
 
+      {busy && (
+        <div className="space-y-1.5" role="status" aria-live="polite">
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-raised">
+            <div
+              className={`h-full rounded-full bg-accent transition-[width] duration-150 ease-out ${
+                sent ? 'animate-pulse' : ''
+              }`}
+              style={{ width: `${sent ? 100 : progress}%` }}
+            />
+          </div>
+          <div className="text-xs text-muted">
+            {sent ? 'Uploaded. Analyzing the file…' : `Uploading… ${progress}%`}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         <Button onClick={run} disabled={!file} loading={busy}>
-          {busy ? 'Analyzing' : 'Run analysis'}
+          {busy ? (sent ? 'Analyzing' : 'Uploading') : 'Run analysis'}
         </Button>
+        {busy && (
+          <button
+            onClick={cancel}
+            className="text-xs text-muted transition-colors hover:text-secondary"
+          >
+            Cancel
+          </button>
+        )}
         {file && !busy && (
           <button
-            onClick={() => setFile(null)}
+            onClick={() => choose(null)}
             className="text-xs text-muted transition-colors hover:text-secondary"
           >
             Clear

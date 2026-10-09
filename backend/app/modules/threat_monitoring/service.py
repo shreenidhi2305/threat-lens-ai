@@ -8,6 +8,7 @@ is unreachable. The persistent schema is in
 
 from __future__ import annotations
 
+import time
 import uuid
 from collections import Counter, deque
 from datetime import datetime, timedelta, timezone
@@ -18,12 +19,16 @@ from app.modules.file_analysis.schemas import AnalysisResult
 from app.modules.threat_monitoring.schemas import Detection, ThreatSnapshot
 
 _MAX_LOG = 2000
+# Seconds a Supabase-backed detection list is reused (cleared on every new detection).
+_CACHE_TTL_SECONDS = 3.0
 
 
 class ThreatMonitoringService:
     def __init__(self) -> None:
         self._log: deque[Detection] = deque(maxlen=_MAX_LOG)
         self._repository = DetectionRepository()
+        # (monotonic timestamp, rows) -- see ``_all``. Only used when Supabase is configured.
+        self._cache: tuple[float, list[Detection]] | None = None
 
     def record(self, result: AnalysisResult, actor: str | None = None) -> Detection:
         v = result.verdict
@@ -47,6 +52,7 @@ class ThreatMonitoringService:
         )
         self._log.appendleft(detection)
         self._persist(detection)
+        self._cache = None  # a new detection makes any cached list stale
         return detection
 
     def _persist(self, detection: Detection) -> None:
@@ -81,6 +87,12 @@ class ThreatMonitoringService:
     def _all(self) -> list[Detection]:
         """The current dataset: Supabase-backed when configured, else in-memory."""
         if settings.supabase_configured:
+            # One page view triggers several endpoints (stats, timeline, detections,
+            # families...) that each need this same list. A few seconds of caching
+            # turns N x 2000-row queries into one without making the UI visibly stale.
+            cached = self._cache
+            if cached is not None and time.monotonic() - cached[0] < _CACHE_TTL_SECONDS:
+                return cached[1]
             try:
                 rows = self._repository.list(limit=_MAX_LOG)
                 items = []
@@ -91,6 +103,7 @@ class ThreatMonitoringService:
                     if 'analyst_id' in row:
                         row['analyst'] = row.pop('analyst_id')
                     items.append(Detection.model_validate(row))
+                self._cache = (time.monotonic(), items)
                 return items
             except Exception:
                 pass  # fall back to the in-memory log below

@@ -1,3 +1,4 @@
+import functools
 from dataclasses import dataclass
 
 from supabase import Client, create_client
@@ -11,6 +12,13 @@ class SupabaseClients:
     storage: Client
 
 
+@functools.lru_cache(maxsize=2)
+def _client(url: str, key: str) -> Client:
+    # Building a client sets up a new HTTP session; do it once per credential pair,
+    # not on every repository call.
+    return create_client(url, key)
+
+
 def get_supabase_clients() -> SupabaseClients:
-    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
+    client = _client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
     return SupabaseClients(database=client, storage=client)

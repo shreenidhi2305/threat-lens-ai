@@ -29,7 +29,7 @@ const STATUS_TONE = {
 } as const;
 
 export function AlertsPage() {
-  const alerts = useAsync(() => fetchAlerts());
+  const alerts = useAsync((signal) => fetchAlerts(undefined, signal));
   const stats = useAsync(fetchAlertStats);
   const incidents = useAsync(fetchIncidents);
   const [selected, setSelected] = useState<Set<string>>(new Set());

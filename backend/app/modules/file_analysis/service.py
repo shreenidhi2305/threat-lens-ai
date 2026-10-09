@@ -37,7 +37,7 @@ class FileAnalysisService:
             network=network,
         )
 
-        strings_sample = extract_strings(data, min_length=6)[:_STRINGS_SAMPLE_LIMIT]
+        strings_sample = extract_strings(data, min_length=6, limit=_STRINGS_SAMPLE_LIMIT)
 
         behavior = analyze_behavior(
             data,
