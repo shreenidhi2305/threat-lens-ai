@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import { NotificationBell } from '../components/NotificationBell';
 import { visibleSections } from '../lib/nav';
 import { ChevronDownIcon, LogoutIcon, ShieldIcon } from '../ui/icons';
+
+const NOTIFIABLE_ROLES = new Set(['Security Analyst', 'SOC Team Member', 'Administrator']);
 
 const TITLES: Record<string, string> = {
   '/dashboard': 'Overview',
   '/submit': 'Submit File',
   '/reports': 'Analysis Report',
-  '/behavior': 'Behavioral Analysis',
+  '/behavior': 'Behavior Analysis',
   '/threats': 'Threat Monitor',
   '/alerts': 'Alerts',
   '/analytics': 'Analytics',
@@ -124,7 +127,10 @@ export function AppLayout() {
             <ShieldIcon className="text-accent" />
           </div>
           <h1 className="text-sm font-medium text-text">{title}</h1>
-          <UserMenu />
+          <div className="flex items-center gap-1.5">
+            {user && NOTIFIABLE_ROLES.has(user.role) && <NotificationBell />}
+            <UserMenu />
+          </div>
         </header>
 
         {/* mobile nav */}

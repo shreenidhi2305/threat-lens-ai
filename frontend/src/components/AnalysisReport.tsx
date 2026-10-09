@@ -1,5 +1,5 @@
-import type { AnalysisResult, Agreement, MLPrediction, RiskLevel } from '../lib/types';
-import { AlertTriangleIcon, FingerprintIcon, GlobeIcon, RadarIcon } from '../ui/icons';
+import type { AnalysisResult, Agreement, BehaviorProfile, MLPrediction, RiskLevel, ThreatIntelResult } from '../lib/types';
+import { ActivityIcon, AlertTriangleIcon, FingerprintIcon, GlobeIcon, RadarIcon } from '../ui/icons';
 import { Badge, CopyButton, InfoRow, Panel, RiskMeter, SectionLabel } from '../ui/primitives';
 import { BehaviorAnalysisPanel } from './BehaviorAnalysisPanel';
 
@@ -105,6 +105,73 @@ function MLPanel({ ml }: { ml: MLPrediction | null }) {
   );
 }
 
+function BehaviorPanel({ behavior }: { behavior: BehaviorProfile }) {
+  return (
+    <Panel
+      title="Behavioral Analysis"
+      aside={<ActivityIcon className="text-muted" />}
+    >
+      <div className="space-y-3">
+        <p className="text-sm text-secondary">{behavior.narrative}</p>
+        {behavior.capabilities.length > 0 && (
+          <ul className="space-y-2">
+            {behavior.capabilities.map((c) => (
+              <li key={c.category} className="rounded-md border border-line-soft px-3 py-2">
+                <div className="text-sm font-medium text-text">{c.label}</div>
+                {c.evidence.length > 0 && (
+                  <div className="mt-0.5 line-clamp-2 text-2xs text-muted">{c.evidence.join(' · ')}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-2xs text-muted">
+          Inferred from imports, PE structure, YARA families, and strings — the file is never executed.
+        </p>
+      </div>
+    </Panel>
+  );
+}
+
+function ThreatIntelPanel({ intel }: { intel: ThreatIntelResult }) {
+  return (
+    <Panel title="Threat Intelligence" aside={<GlobeIcon className="text-muted" />}>
+      {!intel.configured ? (
+        <p className="text-sm text-secondary">VirusTotal is not configured for this deployment.</p>
+      ) : !intel.available ? (
+        <p className="text-sm text-secondary">{intel.reason ?? 'VirusTotal data unavailable.'}</p>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="text-2xs uppercase tracking-[0.06em] text-muted">detection ratio</div>
+              <div className="font-mono text-2xl font-semibold text-text">
+                {intel.malicious}
+                <span className="text-sm text-muted"> / {intel.total_engines}</span>
+              </div>
+            </div>
+            <Badge tone={(intel.malicious ?? 0) > 0 ? 'high' : 'low'}>
+              {(intel.malicious ?? 0) > 0 ? 'flagged' : 'clean'}
+            </Badge>
+          </div>
+          <InfoRow label="Suspicious" value={intel.suspicious ?? 0} />
+          <InfoRow label="Undetected / harmless" value={`${intel.undetected ?? 0} / ${intel.harmless ?? 0}`} />
+          {intel.permalink && (
+            <a
+              href={intel.permalink}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-xs text-accent hover:underline"
+            >
+              View on VirusTotal ↗
+            </a>
+          )}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 export function AnalysisReport({ result }: { result: AnalysisResult }) {
   const { risk, metadata, hashes, signature_match: sig, yara_matches, network_indicators: net, ml } = result;
   const v = result.verdict;
@@ -148,6 +215,7 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg font-semibold tracking-[-0.01em] text-text">{classification}</span>
               {v?.family && <Badge tone={level}>{v.family}</Badge>}
+              {v?.novel_threat && <Badge tone="medium">Unknown threat · no signature match</Badge>}
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-sm text-secondary">
               <AlertTriangleIcon className={LEVEL_TEXT[level]} />
@@ -295,7 +363,16 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
         </div>
       </div>
 
-      {/* behavioral analysis (Milestone 3) */}
+      {/* AI prediction: quick capability summary + threat intel */}
+      <div>
+        <SectionLabel>AI Prediction</SectionLabel>
+        <div className="grid gap-4 md:grid-cols-2">
+          <BehaviorPanel behavior={result.behavior} />
+          <ThreatIntelPanel intel={result.threat_intel} />
+        </div>
+      </div>
+
+      {/* behavioral analysis: full MITRE ATT&CK-mapped kill-chain inference */}
       <div>
         <SectionLabel>Behavioral Analysis · MITRE ATT&amp;CK</SectionLabel>
         <BehaviorAnalysisPanel behavioral={result.behavioral_analysis} />

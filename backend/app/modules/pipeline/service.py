@@ -5,9 +5,11 @@ uploaded file:
 
     File Service (done by caller)
       -> Analysis Service        static analysis + feature extraction
-      -> Behavioral Analysis     static ATT&CK inference (no execution)
+      -> Behavioral Analysis     MITRE ATT&CK inference (static only, no execution)
       -> ML Prediction Service   model inference
       -> Classification Service  verdict fusion (Result Generation)
+      -> Threat Intel Service    VirusTotal enrichment (best-effort, informational)
+      -> Report Service          persisted threat prediction report
       -> Threat Monitoring       detection logging
       -> Alert Service           alert generation
 """
@@ -18,9 +20,12 @@ import logging
 
 from app.ml.inference.predictor import predict as ml_predict
 from app.modules.alerts.service import alerts_service
+from app.modules.behavioral_analysis.service import behavioral_analysis_service
 from app.modules.file_analysis.schemas import AnalysisResult, MLPrediction
 from app.modules.file_analysis.service import file_analysis_service
 from app.modules.pipeline.fusion import fuse
+from app.modules.reports.service import reports_service
+from app.modules.threat_intel.service import threat_intel_service
 from app.modules.threat_monitoring.service import threat_monitoring_service
 
 logger = logging.getLogger(__name__)
@@ -31,11 +36,9 @@ class PipelineService:
         # 1. static analysis
         result = file_analysis_service.analyze_static_file(object_path, data)
 
-        # 2. behavioral analysis (static ATT&CK inference, no execution)
+        # 2. behavioral analysis (MITRE ATT&CK inference from static signals only)
         try:
-            from app.modules.behavioral_analysis.service import behavioral_analysis_service
-
-            behavioral = behavioral_analysis_service.analyze(
+            result.behavioral_analysis = behavioral_analysis_service.analyze(
                 data,
                 object_path=object_path,
                 suspicious_strings=result.suspicious_strings,
@@ -46,10 +49,8 @@ class PipelineService:
                 strings_sample=result.strings_sample,
                 file_hash=result.sha256,
             )
-            result.behavioral_analysis = behavioral  # type: ignore[attr-defined]
         except Exception:  # noqa: BLE001 - never let behavioral analysis break the pipeline
-            logger.exception("Behavioral analysis failed")
-            result.behavioral_analysis = None  # type: ignore[attr-defined]
+            logger.exception('Behavioral analysis failed')
 
         # 3. ML inference
         try:
@@ -62,10 +63,22 @@ class PipelineService:
         # 4. classification / result generation
         result.verdict = fuse(result, ml)
 
-        # 5. detection logging
+        # 5. threat intelligence enrichment (best-effort; never affects the verdict)
+        try:
+            result.threat_intel = threat_intel_service.lookup_hash(result.hashes.sha256)
+        except Exception:  # noqa: BLE001 - a VirusTotal outage must not break a scan
+            logger.exception('Threat intel lookup failed')
+
+        # 6. persisted threat prediction report
+        try:
+            reports_service.create_threat_prediction_report(result)
+        except Exception:  # noqa: BLE001 - report persistence must not break detection
+            logger.exception('Threat prediction report creation failed')
+
+        # 7. detection logging
         detection = threat_monitoring_service.record(result, actor=actor)
 
-        # 6. alerting
+        # 8. alerting
         alerts_service.evaluate(result, detection_id=detection.id, actor=actor)
 
         return result

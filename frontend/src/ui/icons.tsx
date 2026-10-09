@@ -144,16 +144,9 @@ export const FingerprintIcon = (p: IconProps) => (
   </Base>
 );
 
-export const CodeIcon = (p: IconProps) => (
-  <Base {...p}>
-    <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />
-  </Base>
-);
-
 export const ActivityIcon = (p: IconProps) => (
   <Base {...p}>
-    <path d="M3 12h3l2-5 4 10 2-6h4" />
-    <path d="M12 3a9 9 0 019 9 9 9 0 01-9 9 9 9 0 01-9-9 9 9 0 019-9z" opacity={0.15} />
+    <path d="M3 12h4l3 8 4-16 3 8h4" />
   </Base>
 );
 
@@ -171,5 +164,11 @@ export const TargetIcon = (p: IconProps) => (
     <circle cx="12" cy="12" r="6" opacity={0.5} />
     <circle cx="12" cy="12" r="9" opacity={0.25} />
     <path d="M12 3v3M12 18v3M3 12h3M18 12h3" opacity={0.5} />
+  </Base>
+);
+
+export const CodeIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />
   </Base>
 );

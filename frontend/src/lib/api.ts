@@ -4,10 +4,16 @@ import type {
   Alert,
   AlertStats,
   AnalysisResult,
+  AnalyticsSummary,
+  AppNotification,
+  BehaviorCatalog,
   BehavioralAnalysisResult,
   Detection,
   Incident,
   ModelInfo,
+  NotificationCounts,
+  Report,
+  ReportRecord,
   ThreatSnapshot,
   ThreatStats,
   TimelineBucket,
@@ -65,8 +71,35 @@ export const uploadSample = async (file: File): Promise<AnalysisResult> => {
   return data;
 };
 
+
 export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob> =>
   (await api.post('/reports/pdf', result, { responseType: 'blob' })).data;
+
+// --- Milestone 3: persisted per-scan threat prediction reports ------------
+
+export const fetchReports = async (): Promise<Report[]> => (await api.get<Report[]>('/reports')).data;
+
+export const downloadPreviousReport = async (reportId: string): Promise<Blob> =>
+  (await api.get(`/reports/${reportId}/pdf`, { responseType: 'blob' })).data;
+
+// --- Milestone 3: behavioral analysis (MITRE ATT&CK) -----------------------
+
+export const analyzeBehaviorDirect = async (file: File): Promise<BehavioralAnalysisResult> => {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await api.post<BehavioralAnalysisResult>('/behavior/analyze', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+export const analyzeBehaviorFromResult = async (
+  result: AnalysisResult,
+): Promise<BehavioralAnalysisResult> =>
+  (await api.post<BehavioralAnalysisResult>('/behavior/from-analysis', result)).data;
+
+export const fetchBehaviorCatalog = async (): Promise<BehaviorCatalog> =>
+  (await api.get<BehaviorCatalog>('/behavior/catalog')).data;
 
 // --- Milestone 2: monitoring, alerts, model -------------------------------
 
@@ -92,6 +125,30 @@ export const fetchThreatStats = async (): Promise<ThreatStats> =>
 export const fetchThreatFamilies = async (): Promise<string[]> =>
   (await api.get<string[]>('/threats/families')).data;
 
+export interface ThreatReportParams extends DetectionFilters {
+  window: string;
+  threatsOnly: boolean;
+}
+
+export const downloadThreatReport = async (params: ThreatReportParams): Promise<Blob> =>
+  (
+    await api.get('/threats/report', {
+      responseType: 'blob',
+      params: {
+        window: params.window,
+        threats_only: params.threatsOnly,
+        ...Object.fromEntries(
+          Object.entries({
+            level: params.level,
+            verdict: params.verdict,
+            family: params.family,
+            q: params.q,
+          }).filter(([, value]) => value),
+        ),
+      },
+    })
+  ).data;
+
 export const fetchAlerts = async (status?: string): Promise<Alert[]> =>
   (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {} })).data;
 
@@ -113,39 +170,34 @@ export const createIncident = async (alertIds: string[], title?: string): Promis
 export const fetchModelInfo = async (): Promise<ModelInfo> =>
   (await api.get<ModelInfo>('/malware/model')).data;
 
-// --- Milestone 3: behavioral analysis ------------------------------------
+// --- Analytics dashboard ---------------------------------------------------
 
-export const analyzeBehaviorDirect = async (file: File): Promise<BehavioralAnalysisResult> => {
-  const form = new FormData();
-  form.append('file', file);
-  const { data } = await api.post<BehavioralAnalysisResult>('/behavior/analyze', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return data;
-};
+export const fetchAnalyticsSummary = async (): Promise<AnalyticsSummary> =>
+  (await api.get<AnalyticsSummary>('/analytics/summary')).data;
 
-export const analyzeBehaviorFromResult = async (
-  result: AnalysisResult,
-): Promise<BehavioralAnalysisResult> =>
-  (await api.post<BehavioralAnalysisResult>('/behavior/from-analysis', result)).data;
+export const fetchAnalyticsTimeline = async (window: string = '7d'): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/analytics/timeline', { params: { window } })).data;
 
-export const fetchBehaviorCatalog = async (): Promise<{
-  total: number;
-  behaviors: Array<{
-    id: string;
-    tactic: string;
-    tactic_id: string;
-    technique: string;
-    technique_id: string;
-    name: string;
-    description: string;
-    severity: string;
-    mitre_url: string;
-  }>;
-  tactic_order: string[];
-}> => (await api.get('/behavior/catalog')).data;
+// --- Milestone 3: notification and reporting workflows --------------------
 
-export const fetchBehaviorTactics = async (): Promise<{
-  tactics: Array<{ tactic: string; tactic_id: string; total_behaviors: number }>;
-  order: string[];
-}> => (await api.get('/behavior/tactics')).data;
+export const fetchNotifications = async (unreadOnly = false, limit = 50): Promise<AppNotification[]> =>
+  (
+    await api.get<AppNotification[]>('/notifications/', {
+      params: { unread_only: unreadOnly, limit },
+    })
+  ).data;
+
+export const fetchUnreadCount = async (): Promise<NotificationCounts> =>
+  (await api.get<NotificationCounts>('/notifications/unread-count')).data;
+
+export const markNotificationRead = async (id: string): Promise<AppNotification> =>
+  (await api.post<AppNotification>(`/notifications/${id}/read`)).data;
+
+export const markAllNotificationsRead = async (): Promise<{ marked: number }> =>
+  (await api.post<{ marked: number }>('/notifications/read-all')).data;
+
+export const fetchReportHistory = async (limit = 50): Promise<ReportRecord[]> =>
+  (await api.get<ReportRecord[]>('/reports/history', { params: { limit } })).data;
+
+export const downloadSummaryReport = async (window: string = '7d'): Promise<Blob> =>
+  (await api.post('/reports/summary', null, { params: { window }, responseType: 'blob' })).data;

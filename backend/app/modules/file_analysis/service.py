@@ -1,3 +1,4 @@
+from app.modules.file_analysis.analyzers.behavior import analyze_behavior
 from app.modules.file_analysis.analyzers.hashing import calculate_hashes
 from app.modules.file_analysis.analyzers.metadata import extract_metadata
 from app.modules.file_analysis.analyzers.network_indicators import extract_network_indicators
@@ -7,6 +8,7 @@ from app.modules.file_analysis.analyzers.strings import extract_strings
 from app.modules.file_analysis.analyzers.yara import scan_with_yara, yara_available
 from app.modules.file_analysis.schemas import (
     AnalysisResult,
+    BehaviorProfile,
     FileHashes,
     FileMetadata,
     NetworkIndicators,
@@ -37,6 +39,13 @@ class FileAnalysisService:
 
         strings_sample = extract_strings(data, min_length=6)[:_STRINGS_SAMPLE_LIMIT]
 
+        behavior = analyze_behavior(
+            data,
+            yara_matches=yara_matches,
+            suspicious_strings=assessment['suspicious_strings'],
+            network=network,
+        )
+
         return AnalysisResult(
             object_path=object_path,
             sha256=hashes['sha256'],
@@ -51,6 +60,7 @@ class FileAnalysisService:
             suspicious_strings=assessment['suspicious_strings'],
             strings_sample=strings_sample,
             risk=RiskAssessment(**assessment['risk']),
+            behavior=BehaviorProfile(**behavior),
             notes=['Static analysis and ML inference only. Uploaded files are never executed.'],
         )
 

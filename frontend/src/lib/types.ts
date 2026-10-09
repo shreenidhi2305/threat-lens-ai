@@ -58,6 +58,66 @@ export interface RiskAssessment {
   recommended_action: string;
 }
 
+export interface CategoryScore {
+  category: string;
+  probability: number;
+}
+
+export interface MLPrediction {
+  available: boolean;
+  applicable: boolean;
+  malicious: boolean | null;
+  malware_probability: number | null;
+  category: string | null;
+  category_confidence: number | null;
+  top_categories: CategoryScore[];
+  model_versions: Record<string, string | null>;
+  reason: string | null;
+}
+
+export type Agreement = 'agree' | 'ml-only' | 'rules-only' | 'conflict';
+
+export interface Verdict {
+  label: 'malicious' | 'suspicious' | 'benign';
+  score: number;
+  level: RiskLevel;
+  confidence: number;
+  classification: string;
+  family: string | null;
+  recommended_action: string;
+  agreement: Agreement;
+  sources: Record<string, unknown>;
+  novel_threat: boolean;
+}
+
+export interface BehaviorCapability {
+  category: string;
+  label: string;
+  evidence: string[];
+}
+
+export interface BehaviorProfile {
+  available: boolean;
+  is_pe: boolean;
+  capabilities: BehaviorCapability[];
+  narrative: string;
+  pe_summary: Record<string, unknown>;
+  import_summary: Record<string, unknown>;
+}
+
+export interface ThreatIntelResult {
+  configured: boolean;
+  available: boolean;
+  malicious: number | null;
+  suspicious: number | null;
+  undetected: number | null;
+  harmless: number | null;
+  total_engines: number | null;
+  reputation: number | null;
+  permalink: string | null;
+  reason: string | null;
+}
+
 export type BehaviorSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export interface BehavioralEvidence {
@@ -107,35 +167,22 @@ export interface BehavioralAnalysisResult {
   kill_chain_stage: string | null;
 }
 
-export interface CategoryScore {
-  category: string;
-  probability: number;
+export interface BehaviorCatalogEntry {
+  id: string;
+  tactic: string;
+  tactic_id: string;
+  technique: string;
+  technique_id: string;
+  name: string;
+  description: string;
+  severity: BehaviorSeverity;
+  mitre_url: string;
 }
 
-export interface MLPrediction {
-  available: boolean;
-  applicable: boolean;
-  malicious: boolean | null;
-  malware_probability: number | null;
-  category: string | null;
-  category_confidence: number | null;
-  top_categories: CategoryScore[];
-  model_versions: Record<string, string | null>;
-  reason: string | null;
-}
-
-export type Agreement = 'agree' | 'ml-only' | 'rules-only' | 'conflict';
-
-export interface Verdict {
-  label: 'malicious' | 'suspicious' | 'benign';
-  score: number;
-  level: RiskLevel;
-  confidence: number;
-  classification: string;
-  family: string | null;
-  recommended_action: string;
-  agreement: Agreement;
-  sources: Record<string, unknown>;
+export interface BehaviorCatalog {
+  total: number;
+  behaviors: BehaviorCatalogEntry[];
+  tactic_order: string[];
 }
 
 export interface AnalysisResult {
@@ -152,8 +199,10 @@ export interface AnalysisResult {
   suspicious_strings: string[];
   strings_sample: string[];
   risk: RiskAssessment;
+  behavior: BehaviorProfile;
   ml: MLPrediction | null;
   verdict: Verdict | null;
+  threat_intel: ThreatIntelResult;
   behavioral_analysis: BehavioralAnalysisResult | null;
   notes: string[];
 }
@@ -174,6 +223,21 @@ export interface Detection {
   model_version: string | null;
   agreement: Agreement | null;
   analyst: string | null;
+}
+export interface Report {
+  report_id: string;
+  status: string;
+  filename: string | null;
+  sample_id: string | null;
+  file_hash: string | null;
+  predicted_class: string | null;
+  confidence: number | null;
+  is_malicious: boolean | null;
+  risk_score: number | null;
+  severity: string | null;
+  static_indicators: string[];
+  recommendation: string | null;
+  timestamp: string | null;
 }
 
 export interface TimelineBucket {
@@ -243,6 +307,65 @@ export interface Incident {
   status: 'open' | 'contained' | 'closed';
   severity: string;
   alert_ids: string[];
+}
+
+export type NotificationCategory = 'alert' | 'status' | 'incident' | 'report';
+
+export interface AppNotification {
+  id: string;
+  created_at: string;
+  category: NotificationCategory;
+  severity: string;
+  title: string;
+  message: string;
+  alert_id: string | null;
+  incident_id: string | null;
+  report_id: string | null;
+  read: boolean;
+  email_sent: boolean;
+}
+
+export interface NotificationCounts {
+  unread: number;
+  total: number;
+}
+
+export type ReportType = 'investigation' | 'summary';
+
+export interface ReportRecord {
+  id: string;
+  created_at: string;
+  report_type: ReportType;
+  format: string;
+  title: string;
+  created_by: string | null;
+  sha256: string | null;
+  filename: string | null;
+  verdict_label: string | null;
+  risk_score: number | null;
+  window: string | null;
+}
+
+export interface AnalyticsSummary {
+  total_samples: number;
+  classified_samples: number;
+  malicious: number;
+  suspicious: number;
+  benign: number;
+  detection_rate: number;
+  last_24h: number;
+  avg_risk_score: number;
+  by_level: Record<string, number>;
+  by_verdict: Record<string, number>;
+  by_agreement: Record<string, number>;
+  top_families: { family: string; count: number }[];
+  ml_only_catches: number;
+  open_alerts: number;
+  critical_alerts: number;
+  reports_generated: number;
+  detector_version: string | null;
+  classifier_version: string | null;
+  generated_at: string;
 }
 
 export interface ModelInfo {

@@ -82,6 +82,7 @@ def test_fusion_agrees_when_both_flag():
     assert verdict.level == "high"
     assert verdict.agreement == "agree"
     assert verdict.score >= 80
+    assert verdict.novel_threat is False
 
 
 def test_fusion_ml_only_when_model_flags_clean_looking_file():
@@ -92,6 +93,9 @@ def test_fusion_ml_only_when_model_flags_clean_looking_file():
     verdict = fuse(clean, ml)
     assert verdict.agreement == "ml-only"
     assert verdict.level in ("medium", "high")
+    # Milestone 3: an ML-only catch is exactly the "unknown/novel threat" case --
+    # no signature or rule match, so the analyst-facing report flags it as such.
+    assert verdict.novel_threat is True
 
 
 def test_fusion_non_pe_ml_does_not_count():
@@ -117,6 +121,8 @@ def test_upload_runs_full_pipeline():
     assert body["ml"] is not None
     assert body["verdict"]["label"] in ("malicious", "suspicious", "benign")
     assert "static_risk_score" in body["verdict"]["sources"]
+    assert body["behavior"] is not None
+    assert body["threat_intel"]["configured"] is False  # no API key in tests
 
 
 def test_model_info_endpoint():

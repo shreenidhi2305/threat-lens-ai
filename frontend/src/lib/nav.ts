@@ -40,7 +40,7 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
         to: '/behavior',
         label: 'Behavior Analysis',
         icon: ActivityIcon,
-        roles: ['Security Analyst', 'Administrator', 'Researcher', 'SOC Team Member'],
+        roles: ['Security Analyst', 'SOC Team Member', 'Administrator', 'Researcher'],
       },
     ],
   },

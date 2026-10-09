@@ -1,12 +1,83 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { ScanList } from '../components/ScanList';
-import { fetchDetections, fetchThreatSnapshot } from '../lib/api';
+import { downloadPreviousReport, fetchDetections, fetchReports, fetchThreatSnapshot } from '../lib/api';
 import { useAsync } from '../lib/useAsync';
 import { Button } from '../ui/Button';
 import { UploadIcon } from '../ui/icons';
 import { EmptyState, Spinner, Stat } from '../ui/primitives';
+
+function PreviousReports() {
+  const reports = useAsync(fetchReports);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const items = reports.data ?? [];
+  if (reports.loading || items.length === 0) return null;
+
+  const download = async (reportId: string, filename: string | null) => {
+    setDownloadingId(reportId);
+    try {
+      const blob = await downloadPreviousReport(reportId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename ?? 'analysis'}-report.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      /* best-effort: leave the row actionable so the user can retry */
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-2xs font-semibold uppercase tracking-[0.08em] text-muted">
+        Previous threat reports
+      </h3>
+      <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-line-soft text-left text-2xs uppercase tracking-[0.06em] text-muted">
+              <th className="px-4 py-2.5 font-medium">Filename</th>
+              <th className="px-4 py-2.5 font-medium">Verdict</th>
+              <th className="px-4 py-2.5 font-medium">Risk</th>
+              <th className="px-4 py-2.5 text-right font-medium">Report</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line-soft">
+            {items.slice(0, 10).map((report) => (
+              <tr key={report.report_id} className="transition-colors hover:bg-surface-raised">
+                <td className="px-4 py-2.5">
+                  <span className="truncate font-mono text-xs text-text">
+                    {report.filename ?? 'Unknown file'}
+                  </span>
+                </td>
+                <td className="px-4 py-2.5 text-secondary">{report.predicted_class ?? 'Unknown'}</td>
+                <td className="px-4 py-2.5">
+                  <span className="font-mono text-xs text-text">{report.risk_score ?? '—'}</span>
+                </td>
+                <td className="px-4 py-2.5 text-right">
+                  <button
+                    type="button"
+                    disabled={downloadingId === report.report_id}
+                    onClick={() => void download(report.report_id, report.filename)}
+                    className="text-xs text-accent hover:underline disabled:opacity-50"
+                  >
+                    {downloadingId === report.report_id ? 'Preparing…' : 'Download PDF'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -88,6 +159,8 @@ export function DashboardPage() {
           }
         />
       )}
+
+      <PreviousReports />
     </div>
   );
 }

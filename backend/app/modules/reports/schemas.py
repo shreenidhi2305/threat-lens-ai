@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ReportResponse(BaseModel):
     report_id: str
     status: str
+    filename: str | None = None
     sample_id: str | None = None
     file_hash: str | None = None
     predicted_class: str | None = None
@@ -19,3 +20,19 @@ class ReportResponse(BaseModel):
 
 
 ReportStatus = ReportResponse
+
+
+class ReportRecord(BaseModel):
+    """One entry in the generated-report history (investigation or summary)."""
+
+    id: str
+    created_at: datetime
+    report_type: str  # investigation | summary
+    format: str = 'pdf'
+    title: str
+    created_by: str | None = None
+    sha256: str | None = None
+    filename: str | None = None
+    verdict_label: str | None = None
+    risk_score: int | None = None
+    window: str | None = None
