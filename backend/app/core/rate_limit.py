@@ -88,6 +88,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             not settings.RATE_LIMIT_ENABLED
             or request.method == 'OPTIONS'
             or path in _EXEMPT_PATHS
+            or not path.startswith(settings.API_PREFIX)  # static UI files are not rate limited
         ):
             return await call_next(request)
 

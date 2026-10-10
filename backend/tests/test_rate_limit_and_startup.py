@@ -51,7 +51,7 @@ def test_middleware_returns_429_with_retry_after(limits_on):
     mini = FastAPI()
     mini.add_middleware(RateLimitMiddleware)
 
-    @mini.get("/ping")
+    @mini.get("/api/v1/ping")
     def ping():
         return {"ok": True}
 
@@ -61,11 +61,11 @@ def test_middleware_returns_429_with_retry_after(limits_on):
 
     c = TestClient(mini)
     for i in range(10):
-        r = c.get("/ping")
+        r = c.get("/api/v1/ping")
         assert r.status_code == 200
         assert r.headers["X-RateLimit-Limit"] == "10"
         assert r.headers["X-RateLimit-Remaining"] == str(9 - i)
-    blocked = c.get("/ping")
+    blocked = c.get("/api/v1/ping")
     assert blocked.status_code == 429
     assert int(blocked.headers["Retry-After"]) >= 1
     assert "Rate limit" in blocked.json()["detail"]

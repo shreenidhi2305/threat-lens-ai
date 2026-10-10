@@ -15,11 +15,58 @@ so there is no CORS to configure and the API is never exposed directly.
 | Goal | How |
 |---|---|
 | Run the full stack anywhere Docker runs (laptop, VM, spare PC) | `docker compose up --build -d` |
+| A free permanent public link (needs a free account) | Hugging Face Space, see below |
 | Share it over a temporary public https URL | `docker compose --profile public up -d` (Cloudflare quick tunnel, no account) |
 | Build, test and publish the images automatically | `.github/workflows/ci.yml` (GitHub Actions + GitHub Container Registry, free for repositories) |
 
 Hosted platforms (AWS, Azure, Render, Fly, ...) all need an account. When you have one, the same
 two images deploy unchanged; see [Moving to a cloud host](#moving-to-a-cloud-host).
+
+## A free, permanent public link (Hugging Face Spaces)
+
+For a link you can send to someone and that stays up, use a free **Hugging Face Space**. It runs the
+app as one Docker container, needs no credit card, and gives 16 GB of RAM, which the ML libraries need
+(most other free tiers have 512 MB). You only need a free account.
+
+1. Create a free account at https://huggingface.co and an access token with **write** permission
+   (Settings, Access Tokens).
+2. **New Space**: name it `threatlens-ai`, choose **Docker** then **Blank**, hardware **CPU basic
+   (free)**, visibility **Public**.
+3. Clone the empty Space next to this repository (use your username, and the token as the password):
+
+   ```bash
+   git clone https://huggingface.co/spaces/<your-username>/threatlens-ai ../threatlens-space
+   ```
+
+4. Fill it from this repository. This prints a fresh secret and demo password:
+
+   ```bash
+   python deploy/huggingface/prepare.py --out ../threatlens-space
+   ```
+
+5. In the Space: **Settings, Variables and secrets, New secret**. Add `JWT_SECRET_KEY` and
+   `DEV_LOGIN_PASSWORD` with the two values the script printed. (Without them the app refuses to
+   start, and the Logs tab says why.)
+6. Push:
+
+   ```bash
+   cd ../threatlens-space
+   git add -A && git commit -m "Deploy ThreatLens" && git push
+   ```
+
+7. Wait 5 to 10 minutes while it builds (Logs tab). When it says **Running**, your link is
+   `https://<your-username>-threatlens-ai.hf.space`. Send that plus the demo password and the account
+   list (`analyst@local`, `soc@local`, `admin@local`, `researcher@local`).
+
+What to know:
+- The dashboards are pre-filled with the synthetic demo samples every time the Space starts
+  (`SEED_DEMO_DATA`), so reviewers never land on empty pages.
+- Data is held in memory and resets on restart. Free Spaces go to sleep when idle and wake on the next
+  visit (about a minute), so open the link yourself shortly before a review.
+- Anyone with the link **and** the password can sign in. The Space's code is public (it is the same
+  code as this repository). Do not put real data in it.
+- To update, run `prepare.py` again and push.
+- CI builds this exact image and smoke-tests it on every push (`space` job).
 
 ## Run it (demo mode, no accounts)
 

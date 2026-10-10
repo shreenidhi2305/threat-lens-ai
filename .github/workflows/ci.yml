@@ -105,6 +105,52 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  space:
+    name: Hugging Face Space image
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the Space folder and build the image
+        run: |
+          python deploy/huggingface/prepare.py --out "$RUNNER_TEMP/space" > /dev/null
+          docker build -t threatlens-space "$RUNNER_TEMP/space"
+
+      - name: Run it like the Space does
+        run: |
+          docker run -d --name tl -p 7860:7860             -e JWT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"             -e DEV_LOGIN_PASSWORD=ci-space-password-123             threatlens-space
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:7860/health >/dev/null 2>&1; then echo "healthy after ${i}s"; break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:7860/health
+
+      - name: UI, sign-in gate, ML model and seeded data
+        run: |
+          pip install requests
+          python - <<'PY'
+          import sys, time, requests
+          base = "http://localhost:7860"
+          assert "<div id=\"root\">" in requests.get(base + "/alerts", timeout=15).text, "UI shell not served"
+          assert requests.post(base + "/api/v1/auth/login", json={"email": "admin@local", "password": "wrong"}, timeout=15).status_code == 401
+          token = requests.post(base + "/api/v1/auth/login", json={"email": "admin@local", "password": "ci-space-password-123"}, timeout=15).json()["access_token"]
+          h = {"Authorization": "Bearer " + token}
+          if not requests.get(base + "/api/v1/malware/model", headers=h, timeout=15).json().get("detector"):
+              sys.exit("ML detector did not load inside the container")
+          for _ in range(60):
+              stats = requests.get(base + "/api/v1/threats/stats", headers=h, timeout=15).json()
+              if stats["total_detections"] >= 8:
+                  break
+              time.sleep(1)
+          print(stats)
+          assert stats["total_detections"] >= 8 and stats["malicious"] >= 3, "demo data was not seeded"
+          PY
+
+      - name: Logs on failure
+        if: failure()
+        run: docker logs tl --tail 200
+
   publish:
     name: Publish images to GitHub Container Registry
     runs-on: ubuntu-latest

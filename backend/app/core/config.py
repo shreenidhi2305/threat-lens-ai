@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     # Requests slower than this are logged as warnings by the timing middleware.
     SLOW_REQUEST_SECONDS: float = 1.0
 
+    # Single-container deployments (e.g. Hugging Face Spaces): the API also serves the built UI
+    # from this folder, so no separate web server is needed. Empty = API only.
+    SERVE_FRONTEND_DIR: str = ''
+    # Sites allowed to embed the UI in a frame. 'none' blocks framing; hosts that show the app
+    # inside their own page (Hugging Face) need their origin here.
+    FRAME_ANCESTORS: str = "'none'"
+    # Fill the dashboards at start-up by scanning the bundled synthetic samples (public demos).
+    SEED_DEMO_DATA: bool = False
+    DEMO_SAMPLES_DIR: str = ''
+
     # API gateway: per-principal sliding-window rate limits (requests per minute).
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_PER_MINUTE: int = 240

@@ -1,4 +1,5 @@
 import logging
+import threading
 import time
 from contextlib import asynccontextmanager
 
@@ -8,6 +9,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.demo_seed import seed_demo_data
+from app.core.frontend import mount_frontend
 from app.core.logging import configure_logging
 from app.core.metrics import metrics
 from app.core.rate_limit import RateLimitMiddleware
@@ -35,6 +38,8 @@ async def lifespan(_app: FastAPI):
     started = time.perf_counter()
     _warm_up()
     logger.info('Warm-up finished in %.2fs', time.perf_counter() - started)
+    if settings.SEED_DEMO_DATA:
+        threading.Thread(target=seed_demo_data, name='demo-seed', daemon=True).start()
     yield
 
 
@@ -69,6 +74,9 @@ def create_application() -> FastAPI:
     @app.get('/health', tags=['health'])
     def health_check() -> dict[str, str]:
         return {'status': 'ok'}
+
+    # Last, so the real routes above always win over the static-file catch-all.
+    mount_frontend(app)
 
     return app
 
