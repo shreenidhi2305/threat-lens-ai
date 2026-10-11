@@ -28,7 +28,11 @@ GITATTRIBUTES_LINES = [
     'backend/app/ml/models/artifacts/*.txt -text -diff',
     'demo/samples/* -text',
 ]
-IGNORE = shutil.ignore_patterns('__pycache__', '*.pyc', '.pytest_cache', 'node_modules', 'dist')
+# Never ship caches, build output, local data or secrets from the working folder.
+IGNORE = shutil.ignore_patterns(
+    '__pycache__', '*.pyc', '.pytest_cache', 'node_modules', 'dist', '.cache', '*.npz',
+    'var', '.env', '.env.*', '*.log',
+)
 
 
 def copy_tree(src: Path, dest: Path) -> None:

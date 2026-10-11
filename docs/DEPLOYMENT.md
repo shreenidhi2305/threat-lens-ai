@@ -28,35 +28,39 @@ For a link you can send to someone and that stays up, use a free **Hugging Face 
 app as one Docker container, needs no credit card, and gives 16 GB of RAM, which the ML libraries need
 (most other free tiers have 512 MB). You only need a free account.
 
-1. Create a free account at https://huggingface.co and an access token with **write** permission
-   (Settings, Access Tokens).
-2. **New Space**: name it `threatlens-ai`, choose **Docker** then **Blank**, hardware **CPU basic
-   (free)**, visibility **Public**.
-3. Clone the empty Space next to this repository (use your username, and the token as the password):
+**One-time setup (about 5 minutes, in the browser):**
+1. Create a free account at https://huggingface.co.
+2. Create an access token at https://huggingface.co/settings/tokens: type **Write** (or a fine-grained
+   token with write access to your repos). Copy it.
 
-   ```bash
-   git clone https://huggingface.co/spaces/<your-username>/threatlens-ai ../threatlens-space
-   ```
+**Deploy (one command):**
 
-4. Fill it from this repository. This prints a fresh secret and demo password:
+```powershell
+pip install huggingface_hub
+$env:HF_TOKEN = "hf_your_token_here"        # bash: export HF_TOKEN=hf_your_token_here
+python deploy/huggingface/deploy.py
+```
 
-   ```bash
-   python deploy/huggingface/prepare.py --out ../threatlens-space
-   ```
+The script creates the Space, sets its secrets, uploads the project, waits for the build (5 to 10
+minutes), then checks the live site and prints:
 
-5. In the Space: **Settings, Variables and secrets, New secret**. Add `JWT_SECRET_KEY` and
-   `DEV_LOGIN_PASSWORD` with the two values the script printed. (Without them the app refuses to
-   start, and the Logs tab says why.)
-6. Push:
+```
+Public link : https://<your-username>-threatlens-ai.hf.space
+Password    : <shown once; save it>
+Accounts    : analyst@local, soc@local, admin@local, researcher@local
+```
 
-   ```bash
-   cd ../threatlens-space
-   git add -A && git commit -m "Deploy ThreatLens" && git push
-   ```
+Send your mentor the link, the password and the account list. Your token stays in your terminal; the
+script never stores it. Try `python deploy/huggingface/deploy.py --dry-run` first to see what it would
+upload without touching the network.
 
-7. Wait 5 to 10 minutes while it builds (Logs tab). When it says **Running**, your link is
-   `https://<your-username>-threatlens-ai.hf.space`. Send that plus the demo password and the account
-   list (`analyst@local`, `soc@local`, `admin@local`, `researcher@local`).
+**Updating later:** run the same command again. It keeps the existing secrets (`--reset-secrets` replaces
+them, `--password` picks your own 12+ character one). If the build fails, the script prints the link to
+the build log.
+
+**Prefer to do it by hand?** `python deploy/huggingface/prepare.py --out ../threatlens-space` assembles the
+folder, then clone your empty Space, copy the files in, add the secrets `JWT_SECRET_KEY` and
+`DEV_LOGIN_PASSWORD` under Settings, Variables and secrets, and `git push`.
 
 What to know:
 - The dashboards are pre-filled with the synthetic demo samples every time the Space starts
@@ -65,7 +69,6 @@ What to know:
   visit (about a minute), so open the link yourself shortly before a review.
 - Anyone with the link **and** the password can sign in. The Space's code is public (it is the same
   code as this repository). Do not put real data in it.
-- To update, run `prepare.py` again and push.
 - CI builds this exact image and smoke-tests it on every push (`space` job).
 
 ## Run it (demo mode, no accounts)
