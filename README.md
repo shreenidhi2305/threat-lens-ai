@@ -126,7 +126,7 @@ docker compose up --build -d         # UI + API at http://localhost:8080
 docker compose --profile public up -d   # optional: free temporary public URL
 ```
 
-A free, permanent public link (Hugging Face Space, one container) is covered in the same guide.
+A free public link (Render, one container) is covered in the same guide.
 Production images (nginx + API), a real-deployment path with Supabase, the security guard rails and
 troubleshooting are in `docs/DEPLOYMENT.md`. CI (`.github/workflows/ci.yml`) builds and smoke-tests
 both images on every push.

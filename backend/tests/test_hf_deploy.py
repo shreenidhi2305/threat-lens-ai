@@ -121,3 +121,12 @@ def test_it_gives_up_with_a_clear_message_if_the_build_never_finishes():
 )
 def test_space_url_follows_hugging_faces_naming(repo, expected):
     assert hf.space_url(repo) == expected
+
+
+def test_the_paid_plan_wall_is_explained_not_a_stack_trace():
+    class Walled(FakeApi):
+        def create_repo(self, repo_id, **kw):
+            raise RuntimeError("402 Payment Required: hosting Docker Spaces requires a PRO subscription")
+
+    with pytest.raises(hf.DeployError, match="Render"):
+        run(Walled())

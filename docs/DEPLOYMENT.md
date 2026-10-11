@@ -15,61 +15,54 @@ so there is no CORS to configure and the API is never exposed directly.
 | Goal | How |
 |---|---|
 | Run the full stack anywhere Docker runs (laptop, VM, spare PC) | `docker compose up --build -d` |
-| A free permanent public link (needs a free account) | Hugging Face Space, see below |
+| A free public link (needs a free account) | Render web service, see below |
 | Share it over a temporary public https URL | `docker compose --profile public up -d` (Cloudflare quick tunnel, no account) |
 | Build, test and publish the images automatically | `.github/workflows/ci.yml` (GitHub Actions + GitHub Container Registry, free for repositories) |
 
 Hosted platforms (AWS, Azure, Render, Fly, ...) all need an account. When you have one, the same
 two images deploy unchanged; see [Moving to a cloud host](#moving-to-a-cloud-host).
 
-## A free, permanent public link (Hugging Face Spaces)
+## A free public link (Render)
 
-For a link you can send to someone and that stays up, use a free **Hugging Face Space**. It runs the
-app as one Docker container, needs no credit card, and gives 16 GB of RAM, which the ML libraries need
-(most other free tiers have 512 MB). You only need a free account.
+For a link you can send to someone, use a free **Render** web service. It runs the app as one
+container (the API serves the built UI itself), and the app uses about 250 MB of memory, inside the
+free plan's 512 MB. You need a free Render account and the project on a GitHub repository Render can
+read. Free web services should not need a credit card; if Render asks for one, stop and tell your team.
 
-**One-time setup (about 5 minutes, in the browser):**
-1. Create a free account at https://huggingface.co.
-2. Create an access token at https://huggingface.co/settings/tokens: type **Write** (or a fine-grained
-   token with write access to your repos). Copy it.
+1. **Put the code where Render can read it.** Either use the team repository, or create your own empty
+   GitHub repository and push this project to it (`git remote add mine <url>`,
+   `git push mine main`). `render.yaml` and `deploy/allinone/Dockerfile` must be on the branch you deploy.
+2. Sign up at https://render.com (the "Sign in with GitHub" button is the easiest) and let it access
+   that repository.
+3. **New, Blueprint**, pick the repository and branch, and click **Apply**. Render reads `render.yaml`:
+   it builds `deploy/allinone/Dockerfile`, starts the service on the free plan, and **generates the two
+   secrets for you**. The first build takes about 10 minutes.
+4. When it shows **Live**, the link is at the top of the service page
+   (`https://threatlens-ai.onrender.com`, or with a short suffix if the name was taken).
+5. **The sign-in password:** service, **Environment**, `DEV_LOGIN_PASSWORD`, then **reveal**. It is a long
+   random value. If you want something easier to share, edit it there to your own 12+ character
+   password (Render redeploys).
+6. Send your mentor the link, the password and the accounts: `analyst@local`, `soc@local`,
+   `admin@local`, `researcher@local`.
 
-**Deploy (one command):**
-
-```powershell
-pip install huggingface_hub
-$env:HF_TOKEN = "hf_your_token_here"        # bash: export HF_TOKEN=hf_your_token_here
-python deploy/huggingface/deploy.py
-```
-
-The script creates the Space, sets its secrets, uploads the project, waits for the build (5 to 10
-minutes), then checks the live site and prints:
-
-```
-Public link : https://<your-username>-threatlens-ai.hf.space
-Password    : <shown once; save it>
-Accounts    : analyst@local, soc@local, admin@local, researcher@local
-```
-
-Send your mentor the link, the password and the account list. Your token stays in your terminal; the
-script never stores it. Try `python deploy/huggingface/deploy.py --dry-run` first to see what it would
-upload without touching the network.
-
-**Updating later:** run the same command again. It keeps the existing secrets (`--reset-secrets` replaces
-them, `--password` picks your own 12+ character one). If the build fails, the script prints the link to
-the build log.
-
-**Prefer to do it by hand?** `python deploy/huggingface/prepare.py --out ../threatlens-space` assembles the
-folder, then clone your empty Space, copy the files in, add the secrets `JWT_SECRET_KEY` and
-`DEV_LOGIN_PASSWORD` under Settings, Variables and secrets, and `git push`.
+Without the Blueprint (a plain **New, Web Service** on a public repository): choose **Docker**, set the
+Dockerfile path to `./deploy/allinone/Dockerfile`, the instance type to **Free**, the health check path to
+`/health`, and add `JWT_SECRET_KEY` and `DEV_LOGIN_PASSWORD` yourself as environment variables.
 
 What to know:
-- The dashboards are pre-filled with the synthetic demo samples every time the Space starts
-  (`SEED_DEMO_DATA`), so reviewers never land on empty pages.
-- Data is held in memory and resets on restart. Free Spaces go to sleep when idle and wake on the next
-  visit (about a minute), so open the link yourself shortly before a review.
-- Anyone with the link **and** the password can sign in. The Space's code is public (it is the same
-  code as this repository). Do not put real data in it.
-- CI builds this exact image and smoke-tests it on every push (`space` job).
+- Free services **sleep after 15 minutes idle** and take about a minute to wake on the next visit, so open
+  the link yourself a couple of minutes before a review.
+- Data is held in memory and resets on every restart or wake; the dashboards are re-filled with the
+  synthetic demo samples each time (`SEED_DEMO_DATA`), so reviewers never land on empty pages.
+- The free plan has little CPU, so large files scan slowly. The demo files are small.
+- Anyone with the link **and** the password can sign in. Do not put real data in it.
+- CI builds this exact image from the repository root and smoke-tests it on every push (`allinone` job).
+
+**If you would rather not create any account:** run it on your own PC and use a free Cloudflare quick tunnel
+(`docker compose --profile public up -d`, see above). It only works while your PC is on.
+
+**Hugging Face Spaces** also works with the same image (`deploy/huggingface/deploy.py`), but Hugging
+Face now requires a paid PRO subscription for Docker Spaces, so it is not a free option.
 
 ## Run it (demo mode, no accounts)
 

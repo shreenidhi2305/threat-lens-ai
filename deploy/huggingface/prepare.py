@@ -57,7 +57,7 @@ def prepare(out: Path) -> list[str]:
 
     copy_tree(ROOT / 'demo' / 'samples', out / 'demo' / 'samples')
 
-    shutil.copy2(HERE / 'Dockerfile', out / 'Dockerfile')
+    shutil.copy2(HERE.parent / 'allinone' / 'Dockerfile', out / 'Dockerfile')
     shutil.copy2(HERE / 'README.md', out / 'README.md')
 
     # Append (never replace) so a Space's own LFS rules survive, and the samples are never

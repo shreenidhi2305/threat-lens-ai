@@ -1,4 +1,7 @@
-"""Deploy ThreatLens AI to a free Hugging Face Space with one command.
+"""Deploy ThreatLens AI to a Hugging Face Space with one command.
+
+NOTE: Hugging Face now requires a paid PRO subscription to host Docker Spaces on free CPU hardware,
+so this only works on a PRO account. For a free public link use Render (see docs/DEPLOYMENT.md).
 
     set HF_TOKEN=hf_xxx            (PowerShell: $env:HF_TOKEN = "hf_xxx")
     python deploy/huggingface/deploy.py
@@ -80,7 +83,15 @@ def deploy(
     log(f'Signed in as {user}. Space: {repo_id}')
 
     existed = api.repo_exists(repo_id, repo_type='space')
-    api.create_repo(repo_id, repo_type='space', space_sdk='docker', private=private, exist_ok=True)
+    try:
+        api.create_repo(repo_id, repo_type='space', space_sdk='docker', private=private, exist_ok=True)
+    except Exception as exc:  # noqa: BLE001
+        if '402' in str(exc) or 'PRO' in str(exc):
+            raise DeployError(
+                'Hugging Face requires a paid PRO subscription to host Docker Spaces. '
+                'For a free public link use Render instead (docs/DEPLOYMENT.md).'
+            ) from exc
+        raise
     log('Space exists.' if existed else 'Created the Space.')
 
     shown_password: str | None = None

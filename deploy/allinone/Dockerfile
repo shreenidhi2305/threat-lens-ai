@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 #
-# All-in-one image for single-container hosts such as Hugging Face Spaces: the API serves the
-# built UI itself, so there is one process and one port (7860).
-# `python deploy/huggingface/prepare.py` assembles the folder this file is built from.
+# All-in-one image for single-container hosts (Render, Hugging Face Spaces, ...): the API serves
+# the built UI itself, so there is one process and one port. It listens on $PORT (hosts set it;
+# default 7860). Build context is the repository root:
+#   docker build -f deploy/allinone/Dockerfile .
 
 # ---- 1. build the React app ---------------------------------------------------------------------
 FROM node:22-alpine AS web
@@ -47,6 +48,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     SERVE_FRONTEND_DIR=/app/static \
     SEED_DEMO_DATA=true \
     DEMO_SAMPLES_DIR=/app/demo_samples \
+    PORT=7860 \
     FRAME_ANCESTORS="https://huggingface.co https://*.hf.space"
 
 WORKDIR /app
@@ -58,8 +60,8 @@ USER user
 
 EXPOSE 7860
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/health', timeout=4)"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('PORT', '7860'), timeout=4)"
 
 # One worker on purpose: alerts, notifications and rate limits are held in this process.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

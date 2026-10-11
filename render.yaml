@@ -1,0 +1,20 @@
+# One-click setup for Render's free tier (https://render.com): "New" -> "Blueprint" -> pick this repo.
+# Builds deploy/allinone/Dockerfile (API + built UI in one container) and generates the secrets, so
+# there is nothing to type. Read the sign-in password in the dashboard: service -> Environment.
+# See docs/DEPLOYMENT.md.
+
+services:
+  - type: web
+    name: threatlens-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/allinone/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Render fills these with long random values on the first deploy.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DEV_LOGIN_PASSWORD
+        generateValue: true
