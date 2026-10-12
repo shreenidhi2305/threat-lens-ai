@@ -11,6 +11,8 @@ import math
 import os
 from dataclasses import dataclass
 
+import numpy as np
+
 # Number of leading bytes recorded as the hex "magic" preview in the report.
 _MAGIC_PREVIEW_BYTES = 16
 
@@ -84,24 +86,26 @@ def shannon_entropy(data: bytes) -> float:
     """Return the Shannon entropy of ``data`` in bits per byte (0.0-8.0)."""
     if not data:
         return 0.0
-    counts = [0] * 256
-    for byte in data:
-        counts[byte] += 1
+    counts = np.bincount(np.frombuffer(data, dtype=np.uint8), minlength=256)
     length = len(data)
     entropy = 0.0
-    for count in counts:
-        if count:
-            probability = count / length
-            entropy -= probability * math.log2(probability)
+    for count in counts[counts > 0].tolist():
+        probability = count / length
+        entropy -= probability * math.log2(probability)
     return entropy
+
+
+_PRINTABLE_BYTES = bytes(range(32, 127)) + b'\t\n\r'
 
 
 def _printable_ratio(data: bytes) -> float:
     """Fraction of bytes that are printable ASCII text or common whitespace."""
     if not data:
         return 0.0
-    printable = sum(1 for byte in data if 32 <= byte <= 126 or byte in (9, 10, 13))
-    return printable / len(data)
+    # Deleting every printable byte leaves only the non-printable ones; this runs
+    # in C and is ~10x faster than a per-byte Python loop.
+    non_printable = len(data.translate(None, _PRINTABLE_BYTES))
+    return (len(data) - non_printable) / len(data)
 
 
 def _identify_pe(data: bytes) -> tuple[str, str] | None:

@@ -32,10 +32,15 @@ class Incident(BaseModel):
     status: IncidentStatus = 'open'
     severity: str
     alert_ids: list[str] = []
+    closed_at: datetime | None = None
 
 
 class AlertActionRequest(BaseModel):
     note: str | None = None
+
+
+class UpdateIncidentRequest(BaseModel):
+    status: str = Field(pattern='^(open|contained|closed)$')
 
 
 class CreateIncidentRequest(BaseModel):

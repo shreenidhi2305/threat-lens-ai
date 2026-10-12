@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
 
 from app.core.dependencies import CurrentUser, require_roles
+from app.modules.audit.service import audit_service
 from app.modules.alerts.service import alerts_service
+from app.modules.reports.service import reports_service
 from app.modules.reports.threat_pdf import render_threat_monitoring_pdf
 from app.modules.threat_monitoring.schemas import Detection, ThreatSnapshot, ThreatStats, TimelineBucket
 from app.modules.threat_monitoring.service import threat_monitoring_service
@@ -77,6 +79,7 @@ def _filter_notes(
 
 @router.get('/report')
 def download_monitoring_report(
+    request: Request,
     user: CurrentUser = Depends(require_roles(*_VIEW_ROLES)),
     window: str = Query('24h', pattern='^(24h|7d|30d)$'),
     level: str | None = Query(None, pattern='^(low|medium|high)$'),
@@ -95,6 +98,13 @@ def download_monitoring_report(
     if threats_only:
         matched = [item for item in matched if item.verdict_label != 'benign']
     role = user.roles[0] if user.roles else 'Unknown'
+    audit_service.record_request(request, 'report.monitoring', user=user, detail=f'window {window}')
+    reports_service.log_report(
+        report_type='summary',
+        title=f'Threat Monitoring Report — {window}',
+        created_by=user.user_id,
+        window=window,
+    )
     pdf = render_threat_monitoring_pdf(
         stats=stats,
         timeline=timeline,

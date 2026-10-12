@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { clearToken, fetchProfile, getToken, login as apiLogin } from '../lib/api';
+import { clearToken, fetchProfile, getToken, login as apiLogin, updateProfile } from '../lib/api';
 import type { UserProfile } from '../lib/types';
 
 interface AuthState {
@@ -9,6 +9,7 @@ interface AuthState {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  saveDisplayName: (name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -46,9 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const saveDisplayName = useCallback(async (name: string) => {
+    setUser(await updateProfile(name));
+  }, []);
+
   const value = useMemo<AuthState>(
-    () => ({ user, loading, login, logout }),
-    [user, loading, login, logout],
+    () => ({ user, loading, login, logout, saveDisplayName }),
+    [user, loading, login, logout, saveDisplayName],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

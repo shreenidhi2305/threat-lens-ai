@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { usePolling } from '../lib/usePolling';
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -41,19 +42,26 @@ export function NotificationBell() {
       .catch(() => undefined);
   };
 
+  // Initial fetch, then poll -- paused while the tab is hidden.
   useEffect(() => {
     refreshCount();
-    const id = window.setInterval(refreshCount, POLL_MS);
-    return () => window.clearInterval(id);
   }, []);
+  usePolling(refreshCount, POLL_MS);
 
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   const toggle = () => {
@@ -92,7 +100,9 @@ export function NotificationBell() {
       <button
         onClick={toggle}
         aria-label="Notifications"
-        className="relative flex size-8 items-center justify-center rounded-md text-secondary transition-colors duration-150 ease-out hover:bg-surface-raised hover:text-text"
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="relative flex size-10 items-center justify-center rounded-md text-secondary transition-colors duration-150 ease-out hover:bg-surface-raised hover:text-text sm:size-8"
       >
         <BellIcon className="text-base" />
         {unread > 0 && (
@@ -103,7 +113,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="tl-rise absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-lg border border-line bg-surface shadow-xl shadow-black/40">
+        <div className="tl-rise absolute right-0 z-20 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-line bg-surface shadow-xl shadow-black/40">
           <div className="flex items-center justify-between border-b border-line-soft px-3 py-2.5">
             <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted">
               Notifications

@@ -4,7 +4,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = 'ThreatLens AI API'
     API_PREFIX: str = '/api/v1'
-    API_VERSION: str = '0.1.0'
+    API_VERSION: str = '1.0.0'
+
+    # 'production' turns on startup safety checks and disables the local dev login.
+    APP_ENV: str = 'development'
+    # Escape hatch for demo deployments with no identity provider (never for real data).
+    ALLOW_DEV_LOGIN: bool = False
+    # When set, the dev login only accepts this shared password (use it for any demo that is
+    # reachable by other people, e.g. a public tunnel). Empty = any password (local dev only).
+    DEV_LOGIN_PASSWORD: str = ''
+    # Honour X-Forwarded-For when running behind a reverse proxy / load balancer.
+    TRUST_PROXY_HEADERS: bool = False
 
     JWT_SECRET_KEY: str = 'change-me'
     JWT_ALGORITHM: str = 'HS256'
@@ -17,6 +27,29 @@ class Settings(BaseSettings):
 
     VIRUSTOTAL_API_KEY: str = ''
     VIRUSTOTAL_TIMEOUT_SECONDS: float = 4.0
+
+    # Performance tuning.
+    # Max scans running at once (each holds the whole file in memory and is CPU-heavy).
+    MAX_CONCURRENT_SCANS: int = 2
+    # Requests slower than this are logged as warnings by the timing middleware.
+    SLOW_REQUEST_SECONDS: float = 1.0
+
+    # Single-container deployments (e.g. Hugging Face Spaces): the API also serves the built UI
+    # from this folder, so no separate web server is needed. Empty = API only.
+    SERVE_FRONTEND_DIR: str = ''
+    # Sites allowed to embed the UI in a frame. 'none' blocks framing; hosts that show the app
+    # inside their own page (Hugging Face) need their origin here.
+    FRAME_ANCESTORS: str = "'none'"
+    # Fill the dashboards at start-up by scanning the bundled synthetic samples (public demos).
+    SEED_DEMO_DATA: bool = False
+    DEMO_SAMPLES_DIR: str = ''
+
+    # API gateway: per-principal sliding-window rate limits (requests per minute).
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 240
+    LOGIN_RATE_LIMIT_PER_MINUTE: int = 20
+    # Largest accepted upload, in megabytes.
+    MAX_UPLOAD_MB: int = 32
 
     # Comma-separated list of origins allowed to call the API from a browser.
     CORS_ALLOW_ORIGINS: str = 'http://localhost:5173,http://127.0.0.1:5173'
@@ -31,6 +64,11 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     ALERT_EMAIL_FROM: str = 'threatlens@localhost'
     ALERT_EMAIL_TO: str = ''
+
+    # SIEM / SOAR integration: alerts and incidents are forwarded as signed JSON events.
+    SIEM_WEBHOOK_URL: str = ''
+    SIEM_WEBHOOK_TOKEN: str = ''
+    SIEM_WEBHOOK_SECRET: str = ''
 
     model_config = SettingsConfigDict(
     env_file='.env',
@@ -53,6 +91,23 @@ class Settings(BaseSettings):
     @property
     def smtp_configured(self) -> bool:
         return bool(self.SMTP_HOST and self.ALERT_EMAIL_TO)
+
+    @property
+    def siem_configured(self) -> bool:
+        return bool(self.SIEM_WEBHOOK_URL)
+
+    @property
+    def is_production(self) -> bool:
+        return self.APP_ENV.strip().lower() == 'production'
+
+    @property
+    def dev_login_password_required(self) -> bool:
+        return bool(self.DEV_LOGIN_PASSWORD)
+
+    @property
+    def dev_login_enabled(self) -> bool:
+        """The local dev login is available outside production, or when explicitly allowed."""
+        return (not self.is_production) or self.ALLOW_DEV_LOGIN
 
     @property
     def virustotal_configured(self) -> bool:

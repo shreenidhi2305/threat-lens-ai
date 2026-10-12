@@ -1,1 +1,3 @@
 backend/app/ml/models/artifacts/*.txt -text -diff
+# Demo samples are matched by SHA-256 against the signature database: never convert line endings.
+demo/samples/* -text

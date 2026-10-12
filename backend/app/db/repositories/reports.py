@@ -57,13 +57,20 @@ class AnalysisReportRepository:
 
         return result.data[0]
 
+    # Columns needed to render a report row. ``analysis_data`` (the full analysis
+    # JSON) is deliberately excluded here and only loaded by ``get``.
+    LIST_COLUMNS = (
+        "id,sample_id,filename,status,file_hash,predicted_class,confidence,"
+        "is_malicious,risk_score,severity,static_indicators,recommendation,created_at"
+    )
+
     def list(self, limit: int = 100) -> list[dict[str, Any]]:
         clients = get_supabase_clients()
 
         result = (
             clients.database
             .table(self.table_name)
-            .select("*")
+            .select(self.LIST_COLUMNS)
             .order("created_at", desc=True)
             .limit(limit)
             .execute()

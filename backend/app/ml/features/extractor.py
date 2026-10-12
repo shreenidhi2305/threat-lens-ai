@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 
 import numpy as np
 
@@ -107,19 +108,15 @@ def _entropy_histogram(data: bytes) -> np.ndarray:
     return (hist / hist.sum()).astype(np.float32)
 
 
+_ASCII_RUN_CACHE: dict[int, re.Pattern[bytes]] = {}
+
+
 def _ascii_strings(data: bytes, min_len: int = 5) -> list[bytes]:
-    out: list[bytes] = []
-    cur = bytearray()
-    for b in data:
-        if 32 <= b <= 126:
-            cur.append(b)
-        else:
-            if len(cur) >= min_len:
-                out.append(bytes(cur))
-            cur.clear()
-    if len(cur) >= min_len:
-        out.append(bytes(cur))
-    return out
+    """Printable-ASCII runs (regex, C speed; identical output to the old byte loop)."""
+    pattern = _ASCII_RUN_CACHE.get(min_len)
+    if pattern is None:
+        pattern = _ASCII_RUN_CACHE[min_len] = re.compile(rb'[\x20-\x7e]{%d,}' % max(1, min_len))
+    return pattern.findall(data)
 
 
 def _hash_bucket(text: str, buckets: int) -> int:

@@ -1,6 +1,20 @@
 import axios from 'axios';
 
 import type {
+  AdminModels,
+  AuditEvent,
+  AuthConfig,
+  DatasetInfo,
+  FamilyDetail,
+  FamilySummary,
+  FeedbackRecord,
+  FeedbackSummary,
+  IntegrationStatus,
+  ManagedUser,
+  PlatformOverview,
+  SettingField,
+} from './adminTypes';
+import type {
   Alert,
   AlertStats,
   AnalysisResult,
@@ -57,16 +71,40 @@ export const login = async (email: string, password: string): Promise<string> =>
   return data.access_token;
 };
 
+export const fetchAuthConfig = async (signal?: AbortSignal): Promise<AuthConfig> =>
+  (await api.get<AuthConfig>('/auth/config', { signal })).data;
+
 export const fetchProfile = async (): Promise<UserProfile> => {
   const { data } = await api.get<UserProfile>('/users/me');
   return data;
 };
 
-export const uploadSample = async (file: File): Promise<AnalysisResult> => {
+/** Default upload cap; the live value (admin-editable) comes from `fetchUploadLimit`. */
+export const MAX_UPLOAD_BYTES = 32 * 1024 * 1024;
+
+export const fetchUploadLimit = async (signal?: AbortSignal): Promise<number> =>
+  (await api.get<{ max_upload_bytes: number }>('/files/limits', { signal })).data.max_upload_bytes;
+
+export interface UploadOptions {
+  /** Called with 0-100 while the file is being sent. */
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}
+
+export const uploadSample = async (
+  file: File,
+  { onProgress, signal }: UploadOptions = {},
+): Promise<AnalysisResult> => {
   const form = new FormData();
   form.append('file', file);
   const { data } = await api.post<AnalysisResult>('/files/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    // Large files can take a while to scan; the default 30s timeout is too tight.
+    timeout: 180_000,
+    signal,
+    onUploadProgress: (event) => {
+      if (onProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100));
+    },
   });
   return data;
 };
@@ -77,7 +115,8 @@ export const downloadAnalysisPdf = async (result: AnalysisResult): Promise<Blob>
 
 // --- Milestone 3: persisted per-scan threat prediction reports ------------
 
-export const fetchReports = async (): Promise<Report[]> => (await api.get<Report[]>('/reports')).data;
+export const fetchReports = async (signal?: AbortSignal): Promise<Report[]> =>
+  (await api.get<Report[]>('/reports', { signal })).data;
 
 export const downloadPreviousReport = async (reportId: string): Promise<Blob> =>
   (await api.get(`/reports/${reportId}/pdf`, { responseType: 'blob' })).data;
@@ -98,32 +137,37 @@ export const analyzeBehaviorFromResult = async (
 ): Promise<BehavioralAnalysisResult> =>
   (await api.post<BehavioralAnalysisResult>('/behavior/from-analysis', result)).data;
 
-export const fetchBehaviorCatalog = async (): Promise<BehaviorCatalog> =>
-  (await api.get<BehaviorCatalog>('/behavior/catalog')).data;
+export const fetchBehaviorCatalog = async (signal?: AbortSignal): Promise<BehaviorCatalog> =>
+  (await api.get<BehaviorCatalog>('/behavior/catalog', { signal })).data;
 
 // --- Milestone 2: monitoring, alerts, model -------------------------------
 
-export const fetchThreatSnapshot = async (): Promise<ThreatSnapshot> =>
-  (await api.get<ThreatSnapshot>('/threats/snapshot')).data;
+export const fetchThreatSnapshot = async (signal?: AbortSignal): Promise<ThreatSnapshot> =>
+  (await api.get<ThreatSnapshot>('/threats/snapshot', { signal })).data;
 
 export const fetchDetections = async (
   limit = 100,
   filters: DetectionFilters = {},
+  signal?: AbortSignal,
 ): Promise<Detection[]> =>
   (
     await api.get<Detection[]>('/threats/detections', {
       params: { limit, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
+      signal,
     })
   ).data;
 
-export const fetchThreatTimeline = async (window: string = '24h'): Promise<TimelineBucket[]> =>
-  (await api.get<TimelineBucket[]>('/threats/timeline', { params: { window } })).data;
+export const fetchThreatTimeline = async (
+  window: string = '24h',
+  signal?: AbortSignal,
+): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/threats/timeline', { params: { window }, signal })).data;
 
-export const fetchThreatStats = async (): Promise<ThreatStats> =>
-  (await api.get<ThreatStats>('/threats/stats')).data;
+export const fetchThreatStats = async (signal?: AbortSignal): Promise<ThreatStats> =>
+  (await api.get<ThreatStats>('/threats/stats', { signal })).data;
 
-export const fetchThreatFamilies = async (): Promise<string[]> =>
-  (await api.get<string[]>('/threats/families')).data;
+export const fetchThreatFamilies = async (signal?: AbortSignal): Promise<string[]> =>
+  (await api.get<string[]>('/threats/families', { signal })).data;
 
 export interface ThreatReportParams extends DetectionFilters {
   window: string;
@@ -149,14 +193,14 @@ export const downloadThreatReport = async (params: ThreatReportParams): Promise<
     })
   ).data;
 
-export const fetchAlerts = async (status?: string): Promise<Alert[]> =>
-  (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {} })).data;
+export const fetchAlerts = async (status?: string, signal?: AbortSignal): Promise<Alert[]> =>
+  (await api.get<Alert[]>('/alerts/', { params: status ? { status } : {}, signal })).data;
 
-export const fetchAlertStats = async (): Promise<AlertStats> =>
-  (await api.get<AlertStats>('/alerts/stats')).data;
+export const fetchAlertStats = async (signal?: AbortSignal): Promise<AlertStats> =>
+  (await api.get<AlertStats>('/alerts/stats', { signal })).data;
 
-export const fetchIncidents = async (): Promise<Incident[]> =>
-  (await api.get<Incident[]>('/alerts/incidents')).data;
+export const fetchIncidents = async (signal?: AbortSignal): Promise<Incident[]> =>
+  (await api.get<Incident[]>('/alerts/incidents', { signal })).data;
 
 export const acknowledgeAlert = async (id: string): Promise<Alert> =>
   (await api.post<Alert>(`/alerts/${id}/acknowledge`)).data;
@@ -164,19 +208,27 @@ export const acknowledgeAlert = async (id: string): Promise<Alert> =>
 export const resolveAlert = async (id: string): Promise<Alert> =>
   (await api.post<Alert>(`/alerts/${id}/resolve`)).data;
 
+export const updateIncidentStatus = async (
+  id: string,
+  status: Incident['status'],
+): Promise<Incident> => (await api.patch<Incident>(`/alerts/incidents/${id}`, { status })).data;
+
 export const createIncident = async (alertIds: string[], title?: string): Promise<Incident> =>
   (await api.post<Incident>('/alerts/incidents', { alert_ids: alertIds, title })).data;
 
-export const fetchModelInfo = async (): Promise<ModelInfo> =>
-  (await api.get<ModelInfo>('/malware/model')).data;
+export const fetchModelInfo = async (signal?: AbortSignal): Promise<ModelInfo> =>
+  (await api.get<ModelInfo>('/malware/model', { signal })).data;
 
 // --- Analytics dashboard ---------------------------------------------------
 
-export const fetchAnalyticsSummary = async (): Promise<AnalyticsSummary> =>
-  (await api.get<AnalyticsSummary>('/analytics/summary')).data;
+export const fetchAnalyticsSummary = async (signal?: AbortSignal): Promise<AnalyticsSummary> =>
+  (await api.get<AnalyticsSummary>('/analytics/summary', { signal })).data;
 
-export const fetchAnalyticsTimeline = async (window: string = '7d'): Promise<TimelineBucket[]> =>
-  (await api.get<TimelineBucket[]>('/analytics/timeline', { params: { window } })).data;
+export const fetchAnalyticsTimeline = async (
+  window: string = '7d',
+  signal?: AbortSignal,
+): Promise<TimelineBucket[]> =>
+  (await api.get<TimelineBucket[]>('/analytics/timeline', { params: { window }, signal })).data;
 
 // --- Milestone 3: notification and reporting workflows --------------------
 
@@ -187,8 +239,8 @@ export const fetchNotifications = async (unreadOnly = false, limit = 50): Promis
     })
   ).data;
 
-export const fetchUnreadCount = async (): Promise<NotificationCounts> =>
-  (await api.get<NotificationCounts>('/notifications/unread-count')).data;
+export const fetchUnreadCount = async (signal?: AbortSignal): Promise<NotificationCounts> =>
+  (await api.get<NotificationCounts>('/notifications/unread-count', { signal })).data;
 
 export const markNotificationRead = async (id: string): Promise<AppNotification> =>
   (await api.post<AppNotification>(`/notifications/${id}/read`)).data;
@@ -196,8 +248,95 @@ export const markNotificationRead = async (id: string): Promise<AppNotification>
 export const markAllNotificationsRead = async (): Promise<{ marked: number }> =>
   (await api.post<{ marked: number }>('/notifications/read-all')).data;
 
-export const fetchReportHistory = async (limit = 50): Promise<ReportRecord[]> =>
-  (await api.get<ReportRecord[]>('/reports/history', { params: { limit } })).data;
+export const fetchReportHistory = async (limit = 50, signal?: AbortSignal): Promise<ReportRecord[]> =>
+  (await api.get<ReportRecord[]>('/reports/history', { params: { limit }, signal })).data;
 
 export const downloadSummaryReport = async (window: string = '7d'): Promise<Blob> =>
   (await api.post('/reports/summary', null, { params: { window }, responseType: 'blob' })).data;
+
+// --- Milestone 4: profile, administration, feedback and research -------------
+
+export const updateProfile = async (displayName: string): Promise<UserProfile> =>
+  (await api.patch<UserProfile>('/users/me', { display_name: displayName })).data;
+
+export const fetchAdminOverview = async (signal?: AbortSignal): Promise<PlatformOverview> =>
+  (await api.get<PlatformOverview>('/admin/overview', { signal })).data;
+
+export const fetchAdminUsers = async (signal?: AbortSignal): Promise<ManagedUser[]> =>
+  (await api.get<ManagedUser[]>('/admin/users', { signal })).data;
+
+export const changeUserRole = async (userId: string, role: string): Promise<ManagedUser> =>
+  (await api.patch<ManagedUser>(`/admin/users/${encodeURIComponent(userId)}/role`, { role })).data;
+
+export const fetchAdminSettings = async (signal?: AbortSignal): Promise<SettingField[]> =>
+  (await api.get<{ fields: SettingField[] }>('/admin/settings', { signal })).data.fields;
+
+export const saveAdminSettings = async (
+  values: Record<string, string | number>,
+): Promise<SettingField[]> =>
+  (await api.put<{ fields: SettingField[] }>('/admin/settings', { values })).data.fields;
+
+export const resetAdminSettings = async (): Promise<SettingField[]> =>
+  (await api.post<{ fields: SettingField[] }>('/admin/settings/reset')).data.fields;
+
+export const fetchIntegrations = async (signal?: AbortSignal): Promise<IntegrationStatus[]> =>
+  (await api.get<IntegrationStatus[]>('/admin/integrations', { signal })).data;
+
+export const testIntegration = async (
+  id: string,
+): Promise<{ ok: boolean; error: string | null }> =>
+  (await api.post<{ ok: boolean; error: string | null }>(`/admin/integrations/${id}/test`)).data;
+
+export interface AuditFilters {
+  action?: string;
+  actor?: string;
+  q?: string;
+}
+
+export const fetchAuditLog = async (
+  filters: AuditFilters = {},
+  limit = 100,
+  signal?: AbortSignal,
+): Promise<AuditEvent[]> =>
+  (
+    await api.get<AuditEvent[]>('/admin/audit', {
+      params: { limit, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
+      signal,
+    })
+  ).data;
+
+export const fetchAdminModels = async (signal?: AbortSignal): Promise<AdminModels> =>
+  (await api.get<AdminModels>('/admin/models', { signal })).data;
+
+export const reloadModels = async (): Promise<void> => {
+  await api.post('/admin/models/reload');
+};
+
+export const submitFeedback = async (
+  sha256: string,
+  label: 'malicious' | 'benign',
+  note?: string,
+): Promise<FeedbackRecord> =>
+  (await api.post<FeedbackRecord>('/feedback', { sha256, label, note })).data;
+
+export const fetchFeedback = async (limit = 200, signal?: AbortSignal): Promise<FeedbackRecord[]> =>
+  (await api.get<FeedbackRecord[]>('/feedback', { params: { limit }, signal })).data;
+
+export const fetchFeedbackSummary = async (signal?: AbortSignal): Promise<FeedbackSummary> =>
+  (await api.get<FeedbackSummary>('/feedback/summary', { signal })).data;
+
+export const fetchDatasets = async (signal?: AbortSignal): Promise<DatasetInfo[]> =>
+  (await api.get<DatasetInfo[]>('/research/datasets', { signal })).data;
+
+export const fetchFamilies = async (signal?: AbortSignal): Promise<FamilySummary[]> =>
+  (await api.get<FamilySummary[]>('/research/families', { signal })).data;
+
+export const fetchFamilyDetail = async (
+  name: string,
+  signal?: AbortSignal,
+): Promise<FamilyDetail> =>
+  (await api.get<FamilyDetail>(`/research/families/${encodeURIComponent(name)}`, { signal })).data;
+
+/** Download an authenticated CSV endpoint (path is relative to the API base URL). */
+export const downloadCsv = async (path: string): Promise<Blob> =>
+  (await api.get(path, { responseType: 'blob' })).data;

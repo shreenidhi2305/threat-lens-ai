@@ -11,6 +11,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.core.dependencies import CurrentUser, require_roles
+from app.core.runtime_settings import runtime_settings
 from app.modules.behavioral_analysis.engine import BEHAVIOR_CATALOG, _TACTIC_IDS, _TACTIC_ORDER, _mitre_url
 from app.modules.behavioral_analysis.schemas import BehavioralAnalysisRequest, BehavioralAnalysisResult
 from app.modules.behavioral_analysis.service import behavioral_analysis_service
@@ -22,7 +23,6 @@ router = APIRouter()
 
 _SCAN_ROLES = ("Security Analyst", "Administrator", "Researcher", "SOC Team Member")
 
-_MAX_UPLOAD_BYTES = 32 * 1024 * 1024
 
 
 @router.get("/catalog")
@@ -66,8 +66,9 @@ async def analyze_upload(
     data = await file.read()
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Uploaded file is empty")
-    if len(data) > _MAX_UPLOAD_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File exceeds 32 MB limit")
+    limit_mb = int(runtime_settings.get("MAX_UPLOAD_MB"))
+    if len(data) > limit_mb * 1024 * 1024:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, f"File exceeds {limit_mb} MB limit")
 
     object_path = storage.save_sample(data, file.filename or "sample")
     # Run lightweight static analysis to feed the behavioral engine with richer signals

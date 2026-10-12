@@ -1,0 +1,1927 @@
+{
+  "info": {
+    "name": "ThreatLens AI API",
+    "description": "ThreatLens AI REST API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "Sign in (stores the token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"analyst@local\",\n  \"password\": \"demo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('token', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "GET /api/v1/users/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get Me"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/users/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Update Me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "files",
+      "item": [
+        {
+          "name": "GET /api/v1/files/limits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/limits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "limits"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Upload Limits"
+          }
+        },
+        {
+          "name": "POST /api/v1/files/upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "upload"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Upload And Scan",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/files/scan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/scan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "files",
+                "scan"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Scan Stored File",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "behavior",
+      "item": [
+        {
+          "name": "GET /api/v1/behavior/catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/behavior/catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "behavior",
+                "catalog"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get Catalog"
+          }
+        },
+        {
+          "name": "GET /api/v1/behavior/tactics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/behavior/tactics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "behavior",
+                "tactics"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get Tactics"
+          }
+        },
+        {
+          "name": "POST /api/v1/behavior/analyze",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/behavior/analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "behavior",
+                "analyze"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Analyze Upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/behavior/from-analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/behavior/from-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "behavior",
+                "from-analysis"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Analyze From Analysis",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\",\n  \"sha256\": \"string\",\n  \"md5\": \"string\",\n  \"hashes\": {\n    \"md5\": \"string\",\n    \"sha1\": \"string\",\n    \"sha256\": \"string\"\n  },\n  \"metadata\": {\n    \"size_bytes\": 1,\n    \"file_type\": \"string\",\n    \"mime_type\": \"string\",\n    \"magic_hex\": \"string\",\n    \"extension\": null,\n    \"extension_matches_content\": null,\n    \"shannon_entropy\": 1.0,\n    \"likely_packed\": true,\n    \"printable_ratio\": 1.0,\n    \"likely_text\": true\n  },\n  \"signature_match\": {\n    \"matched\": true,\n    \"name\": null,\n    \"type\": null,\n    \"severity\": null\n  },\n  \"yara_matches\": [],\n  \"yara_available\": true,\n  \"network_indicators\": {\n    \"urls\": [],\n    \"ips\": [],\n    \"domains\": []\n  },\n  \"suspicious_indicators\": [],\n  \"suspicious_strings\": [],\n  \"strings_sample\": [],\n  \"risk\": {\n    \"score\": 1,\n    \"level\": \"string\",\n    \"classification\": \"string\",\n    \"recommended_action\": \"string\"\n  },\n  \"behavior\": {\n    \"available\": false,\n    \"is_pe\": false,\n    \"capabilities\": [],\n    \"narrative\": \"Behavioral analysis not run.\",\n    \"pe_summary\": {},\n    \"import_summary\": {}\n  },\n  \"ml\": {\n    \"available\": null,\n    \"applicable\": null,\n    \"malicious\": null,\n    \"malware_probability\": null,\n    \"category\": null,\n    \"category_confidence\": null,\n    \"top_categories\": null,\n    \"model_versions\": null,\n    \"reason\": null\n  },\n  \"verdict\": {\n    \"label\": null,\n    \"score\": null,\n    \"level\": null,\n    \"confidence\": null,\n    \"classification\": null,\n    \"family\": null,\n    \"recommended_action\": null,\n    \"sources\": null,\n    \"agreement\": null,\n    \"novel_threat\": null\n  },\n  \"threat_intel\": {\n    \"configured\": false,\n    \"available\": false,\n    \"malicious\": null,\n    \"suspicious\": null,\n    \"undetected\": null,\n    \"harmless\": null,\n    \"total_engines\": null,\n    \"reputation\": null,\n    \"permalink\": null,\n    \"reason\": null\n  },\n  \"behavioral_analysis\": {\n    \"generated_at\": null,\n    \"file_hash\": null,\n    \"object_path\": null,\n    \"risk_score\": null,\n    \"risk_level\": null,\n    \"confidence\": null,\n    \"behaviors_detected\": null,\n    \"behaviors_total\": null,\n    \"behaviors\": null,\n    \"tactics_summary\": null,\n    \"technique_coverage\": null,\n    \"attack_chain\": null,\n    \"summary\": null,\n    \"kill_chain_stage\": null\n  },\n  \"notes\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/behavior/from-storage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/behavior/from-storage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "behavior",
+                "from-storage"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Analyze Stored",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "malware",
+      "item": [
+        {
+          "name": "POST /api/v1/malware/classify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/malware/classify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "malware",
+                "classify"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Classify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\",\n  \"sample_id\": \"string\",\n  \"analysis\": {\n    \"object_path\": null,\n    \"sha256\": null,\n    \"md5\": null,\n    \"hashes\": null,\n    \"metadata\": null,\n    \"signature_match\": null,\n    \"yara_matches\": null,\n    \"yara_available\": null,\n    \"network_indicators\": null,\n    \"suspicious_indicators\": null,\n    \"suspicious_strings\": null,\n    \"strings_sample\": null,\n    \"risk\": null,\n    \"behavior\": null,\n    \"ml\": null,\n    \"verdict\": null,\n    \"threat_intel\": null,\n    \"behavioral_analysis\": null,\n    \"notes\": null\n  },\n  \"features\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/v1/malware/model",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/malware/model",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "malware",
+                "model"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Model Info"
+          }
+        }
+      ]
+    },
+    {
+      "name": "threats",
+      "item": [
+        {
+          "name": "GET /api/v1/threats/snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/snapshot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "snapshot"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Snapshot"
+          }
+        },
+        {
+          "name": "GET /api/v1/threats/detections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/detections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "detections"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true
+                },
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "verdict",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "family",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Detections"
+          }
+        },
+        {
+          "name": "GET /api/v1/threats/timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/timeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "timeline"
+              ],
+              "query": [
+                {
+                  "key": "window",
+                  "value": "24h",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Timeline"
+          }
+        },
+        {
+          "name": "GET /api/v1/threats/stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "stats"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Stats"
+          }
+        },
+        {
+          "name": "GET /api/v1/threats/families",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/families",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "families"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Families"
+          }
+        },
+        {
+          "name": "GET /api/v1/threats/report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/threats/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "threats",
+                "report"
+              ],
+              "query": [
+                {
+                  "key": "window",
+                  "value": "24h",
+                  "disabled": true
+                },
+                {
+                  "key": "level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "verdict",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "family",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "threats_only",
+                  "value": "False",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Download Monitoring Report"
+          }
+        }
+      ]
+    },
+    {
+      "name": "alerts",
+      "item": [
+        {
+          "name": "GET /api/v1/alerts/",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "List Alerts"
+          }
+        },
+        {
+          "name": "GET /api/v1/alerts/stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "stats"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Alert Stats"
+          }
+        },
+        {
+          "name": "GET /api/v1/alerts/incidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "incidents"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Incidents"
+          }
+        },
+        {
+          "name": "POST /api/v1/alerts/incidents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "incidents"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create Incident",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alert_ids\": [\n    \"string\"\n  ],\n  \"title\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/v1/alerts/incidents/{incident_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/incidents/:incident_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "incidents",
+                ":incident_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "incident_id",
+                  "value": "<incident_id>"
+                }
+              ]
+            },
+            "description": "Update Incident",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/alerts/{alert_id}/acknowledge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:alert_id/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":alert_id",
+                "acknowledge"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "alert_id",
+                  "value": "<alert_id>"
+                }
+              ]
+            },
+            "description": "Acknowledge",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/alerts/{alert_id}/resolve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/:alert_id/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                ":alert_id",
+                "resolve"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "alert_id",
+                  "value": "<alert_id>"
+                }
+              ]
+            },
+            "description": "Resolve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "notifications",
+      "item": [
+        {
+          "name": "GET /api/v1/notifications/",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread_only",
+                  "value": "False",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "List Notifications"
+          }
+        },
+        {
+          "name": "GET /api/v1/notifications/unread-count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread-count"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Unread Count"
+          }
+        },
+        {
+          "name": "POST /api/v1/notifications/{notification_id}/read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:notification_id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":notification_id",
+                "read"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "notification_id",
+                  "value": "<notification_id>"
+                }
+              ]
+            },
+            "description": "Mark Read"
+          }
+        },
+        {
+          "name": "POST /api/v1/notifications/read-all",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Mark All Read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "item": [
+        {
+          "name": "POST /api/v1/reports/pdf",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "pdf"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Download Pdf",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\",\n  \"sha256\": \"string\",\n  \"md5\": \"string\",\n  \"hashes\": {\n    \"md5\": \"string\",\n    \"sha1\": \"string\",\n    \"sha256\": \"string\"\n  },\n  \"metadata\": {\n    \"size_bytes\": 1,\n    \"file_type\": \"string\",\n    \"mime_type\": \"string\",\n    \"magic_hex\": \"string\",\n    \"extension\": null,\n    \"extension_matches_content\": null,\n    \"shannon_entropy\": 1.0,\n    \"likely_packed\": true,\n    \"printable_ratio\": 1.0,\n    \"likely_text\": true\n  },\n  \"signature_match\": {\n    \"matched\": true,\n    \"name\": null,\n    \"type\": null,\n    \"severity\": null\n  },\n  \"yara_matches\": [],\n  \"yara_available\": true,\n  \"network_indicators\": {\n    \"urls\": [],\n    \"ips\": [],\n    \"domains\": []\n  },\n  \"suspicious_indicators\": [],\n  \"suspicious_strings\": [],\n  \"strings_sample\": [],\n  \"risk\": {\n    \"score\": 1,\n    \"level\": \"string\",\n    \"classification\": \"string\",\n    \"recommended_action\": \"string\"\n  },\n  \"behavior\": {\n    \"available\": false,\n    \"is_pe\": false,\n    \"capabilities\": [],\n    \"narrative\": \"Behavioral analysis not run.\",\n    \"pe_summary\": {},\n    \"import_summary\": {}\n  },\n  \"ml\": {\n    \"available\": null,\n    \"applicable\": null,\n    \"malicious\": null,\n    \"malware_probability\": null,\n    \"category\": null,\n    \"category_confidence\": null,\n    \"top_categories\": null,\n    \"model_versions\": null,\n    \"reason\": null\n  },\n  \"verdict\": {\n    \"label\": null,\n    \"score\": null,\n    \"level\": null,\n    \"confidence\": null,\n    \"classification\": null,\n    \"family\": null,\n    \"recommended_action\": null,\n    \"sources\": null,\n    \"agreement\": null,\n    \"novel_threat\": null\n  },\n  \"threat_intel\": {\n    \"configured\": false,\n    \"available\": false,\n    \"malicious\": null,\n    \"suspicious\": null,\n    \"undetected\": null,\n    \"harmless\": null,\n    \"total_engines\": null,\n    \"reputation\": null,\n    \"permalink\": null,\n    \"reason\": null\n  },\n  \"behavioral_analysis\": {\n    \"generated_at\": null,\n    \"file_hash\": null,\n    \"object_path\": null,\n    \"risk_score\": null,\n    \"risk_level\": null,\n    \"confidence\": null,\n    \"behaviors_detected\": null,\n    \"behaviors_total\": null,\n    \"behaviors\": null,\n    \"tactics_summary\": null,\n    \"technique_coverage\": null,\n    \"attack_chain\": null,\n    \"summary\": null,\n    \"kill_chain_stage\": null\n  },\n  \"notes\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/reports/summary",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "window",
+                  "value": "7d",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Download Summary Pdf"
+          }
+        },
+        {
+          "name": "GET /api/v1/reports/history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "List Report History"
+          }
+        },
+        {
+          "name": "GET /api/v1/reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Reports"
+          }
+        },
+        {
+          "name": "GET /api/v1/reports/{report_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/:report_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                ":report_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "report_id",
+                  "value": "<report_id>"
+                }
+              ]
+            },
+            "description": "Get Report Status"
+          }
+        },
+        {
+          "name": "GET /api/v1/reports/{report_id}/pdf",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/:report_id/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                ":report_id",
+                "pdf"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "report_id",
+                  "value": "<report_id>"
+                }
+              ]
+            },
+            "description": "Download Previous Pdf"
+          }
+        }
+      ]
+    },
+    {
+      "name": "analytics",
+      "item": [
+        {
+          "name": "GET /api/v1/analytics/summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "summary"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get Summary"
+          }
+        },
+        {
+          "name": "GET /api/v1/analytics/timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/timeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "timeline"
+              ],
+              "query": [
+                {
+                  "key": "window",
+                  "value": "7d",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Get Timeline"
+          }
+        }
+      ]
+    },
+    {
+      "name": "feedback",
+      "item": [
+        {
+          "name": "POST /api/v1/feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Submit Feedback",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sha256\": \"string\",\n  \"label\": \"string\",\n  \"note\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/v1/feedback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "200",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "List Feedback"
+          }
+        },
+        {
+          "name": "GET /api/v1/feedback/summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback",
+                "summary"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Feedback Summary"
+          }
+        },
+        {
+          "name": "GET /api/v1/feedback/export.csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback",
+                "export.csv"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Export Feedback"
+          }
+        }
+      ]
+    },
+    {
+      "name": "research",
+      "item": [
+        {
+          "name": "GET /api/v1/research/datasets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/research/datasets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "research",
+                "datasets"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Datasets"
+          }
+        },
+        {
+          "name": "GET /api/v1/research/datasets/{dataset_id}/export.csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/research/datasets/:dataset_id/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "research",
+                "datasets",
+                ":dataset_id",
+                "export.csv"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "dataset_id",
+                  "value": "<dataset_id>"
+                }
+              ]
+            },
+            "description": "Export Dataset"
+          }
+        },
+        {
+          "name": "GET /api/v1/research/families",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/research/families",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "research",
+                "families"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Families"
+          }
+        },
+        {
+          "name": "GET /api/v1/research/families/export.csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/research/families/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "research",
+                "families",
+                "export.csv"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Export Families"
+          }
+        },
+        {
+          "name": "GET /api/v1/research/families/{family}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/research/families/:family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "research",
+                "families",
+                ":family"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "family",
+                  "value": "<family>"
+                }
+              ]
+            },
+            "description": "Get Family"
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "GET /api/v1/admin/overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "overview"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Overview"
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Users"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/admin/users/{user_id}/role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:user_id/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":user_id",
+                "role"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "<user_id>"
+                }
+              ]
+            },
+            "description": "Change Role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get Settings"
+          }
+        },
+        {
+          "name": "PUT /api/v1/admin/settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Update Settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/admin/settings/reset",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings",
+                "reset"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Reset Settings"
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/integrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/integrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "integrations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Integrations"
+          }
+        },
+        {
+          "name": "POST /api/v1/admin/integrations/{integration_id}/test",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/integrations/:integration_id/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "integrations",
+                ":integration_id",
+                "test"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "integration_id",
+                  "value": "<integration_id>"
+                }
+              ]
+            },
+            "description": "Test Integration"
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/audit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "actor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Audit Log"
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/audit/export.csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "audit",
+                "export.csv"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Export Audit"
+          }
+        },
+        {
+          "name": "GET /api/v1/admin/models",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "models"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Models"
+          }
+        },
+        {
+          "name": "POST /api/v1/admin/models/reload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/models/reload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "models",
+                "reload"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Reload Model Registry"
+          }
+        }
+      ]
+    },
+    {
+      "name": "analysis",
+      "item": [
+        {
+          "name": "GET /api/v1/analysis/limits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analysis/limits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analysis",
+                "limits"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Upload Limits"
+          }
+        },
+        {
+          "name": "POST /api/v1/analysis/upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analysis/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analysis",
+                "upload"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Upload And Scan",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/v1/analysis/scan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analysis/scan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analysis",
+                "scan"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Scan Stored File",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object_path\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Health Check"
+          }
+        }
+      ]
+    }
+  ]
+}

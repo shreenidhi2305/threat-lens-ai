@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -9,6 +9,7 @@ import {
 } from '../lib/api';
 import type { Detection } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
+import { usePolling } from '../lib/usePolling';
 import { ChartIcon } from '../ui/icons';
 import { EmptyState, Panel, Spinner, Stat } from '../ui/primitives';
 
@@ -60,18 +61,14 @@ export function AnalyticsPage() {
   const [exportError, setExportError] = useState<string | null>(null);
 
   const summary = useAsync(fetchAnalyticsSummary);
-  const timeline = useAsync(() => fetchAnalyticsTimeline(window_), [window_]);
+  const timeline = useAsync((signal) => fetchAnalyticsTimeline(window_, signal), [window_]);
   const model = useAsync(fetchModelInfo);
 
-  // Keep the dashboard current without a manual reload.
-  useEffect(() => {
-    const id = setInterval(() => {
-      summary.reload();
-      timeline.reload();
-    }, 20000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Keep the dashboard current without a manual reload (pauses while the tab is hidden).
+  usePolling(() => {
+    summary.reload();
+    timeline.reload();
+  }, 20000);
 
   if (summary.loading) {
     return (

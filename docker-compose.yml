@@ -1,22 +1,52 @@
+# Production-style stack: nginx serves the built UI and proxies /api to the backend, so the
+# browser talks to a single origin. Only the web port is published; the API is internal.
+#
+#   python deploy/make_env.py --demo        # writes a safe .env (or copy .env.example and edit)
+#   docker compose up --build -d            # UI at http://localhost:8080
+#   docker compose --profile public up -d   # also opens a free public URL (no account needed)
+#
+# See docs/DEPLOYMENT.md.
+
+name: threatlens
+
 services:
-  backend:
+  api:
     build:
       context: ./backend
-    container_name: threatlens-backend
-    env_file:
-      - .env
-    ports:
-      - '8000:8000'
+    image: threatlens-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # nginx is the only thing that can reach the API, so its X-Forwarded-For is trustworthy.
+      TRUST_PROXY_HEADERS: "true"
+    volumes:
+      - threatlens-data:/app/var
+    expose:
+      - "8000"
 
-  frontend:
+  web:
     build:
       context: ./frontend
-    container_name: threatlens-frontend
-    env_file:
-      - .env
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
-    ports:
-      - '5173:5173'
+      args:
+        VITE_API_BASE_URL: /api/v1
+    image: threatlens-web
+    restart: unless-stopped
     depends_on:
-      - backend
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+  # Optional: a free Cloudflare "quick tunnel" gives the stack a temporary public https URL with
+  # no account. The URL is printed in this service's logs:
+  #   docker compose --profile public logs tunnel | grep trycloudflare.com
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: ["public"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://web:80
+    depends_on:
+      - web
+
+volumes:
+  threatlens-data:

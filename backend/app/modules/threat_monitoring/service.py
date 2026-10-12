@@ -8,6 +8,7 @@ is unreachable. The persistent schema is in
 
 from __future__ import annotations
 
+import time
 import uuid
 from collections import Counter, deque
 from datetime import datetime, timedelta, timezone
@@ -18,12 +19,16 @@ from app.modules.file_analysis.schemas import AnalysisResult
 from app.modules.threat_monitoring.schemas import Detection, ThreatSnapshot
 
 _MAX_LOG = 2000
+# Seconds a Supabase-backed detection list is reused (cleared on every new detection).
+_CACHE_TTL_SECONDS = 3.0
 
 
 class ThreatMonitoringService:
     def __init__(self) -> None:
         self._log: deque[Detection] = deque(maxlen=_MAX_LOG)
         self._repository = DetectionRepository()
+        # (monotonic timestamp, rows) -- see ``_all``. Only used when Supabase is configured.
+        self._cache: tuple[float, list[Detection]] | None = None
 
     def record(self, result: AnalysisResult, actor: str | None = None) -> Detection:
         v = result.verdict
@@ -39,6 +44,7 @@ class ThreatMonitoringService:
             family=v.family if v else None,
             ml_probability=ml.malware_probability if ml and ml.available else None,
             ml_category=ml.category if ml and ml.available else None,
+            ml_applicable=ml.applicable if ml and ml.available else None,
             yara_rule_count=len(result.yara_matches),
             signature=result.signature_match.name if result.signature_match.matched else None,
             model_version=(ml.model_versions.get('detector') if ml and ml.available else None),
@@ -47,29 +53,35 @@ class ThreatMonitoringService:
         )
         self._log.appendleft(detection)
         self._persist(detection)
+        self._cache = None  # a new detection makes any cached list stale
         return detection
 
     def _persist(self, detection: Detection) -> None:
         if not settings.supabase_configured:
             return
+        row = {
+            'id': detection.id,
+            'sha256': detection.sha256,
+            'filename': detection.filename,
+            'verdict_label': detection.verdict_label,
+            'score': detection.score,
+            'level': detection.level,
+            'family': detection.family,
+            'ml_probability': detection.ml_probability,
+            'ml_category': detection.ml_category,
+            'yara_rule_count': detection.yara_rule_count,
+            'signature': detection.signature,
+            'model_version': detection.model_version,
+            'agreement': detection.agreement,
+            'analyst_id': detection.analyst,
+            'created_at': detection.at.isoformat(),
+        }
         try:
-            self._repository.create({
-                'id': detection.id,
-                'sha256': detection.sha256,
-                'filename': detection.filename,
-                'verdict_label': detection.verdict_label,
-                'score': detection.score,
-                'level': detection.level,
-                'family': detection.family,
-                'ml_probability': detection.ml_probability,
-                'ml_category': detection.ml_category,
-                'yara_rule_count': detection.yara_rule_count,
-                'signature': detection.signature,
-                'model_version': detection.model_version,
-                'agreement': detection.agreement,
-                'analyst_id': detection.analyst,
-                'created_at': detection.at.isoformat(),
-            })
+            # ml_applicable needs migration 006; fall back without it so logging works before then.
+            try:
+                self._repository.create({**row, 'ml_applicable': detection.ml_applicable})
+            except Exception:
+                self._repository.create(row)
         except Exception:
             # Keep the detection in memory if Supabase is unavailable.
             pass
@@ -81,6 +93,12 @@ class ThreatMonitoringService:
     def _all(self) -> list[Detection]:
         """The current dataset: Supabase-backed when configured, else in-memory."""
         if settings.supabase_configured:
+            # One page view triggers several endpoints (stats, timeline, detections,
+            # families...) that each need this same list. A few seconds of caching
+            # turns N x 2000-row queries into one without making the UI visibly stale.
+            cached = self._cache
+            if cached is not None and time.monotonic() - cached[0] < _CACHE_TTL_SECONDS:
+                return cached[1]
             try:
                 rows = self._repository.list(limit=_MAX_LOG)
                 items = []
@@ -91,6 +109,7 @@ class ThreatMonitoringService:
                     if 'analyst_id' in row:
                         row['analyst'] = row.pop('analyst_id')
                     items.append(Detection.model_validate(row))
+                self._cache = (time.monotonic(), items)
                 return items
             except Exception:
                 pass  # fall back to the in-memory log below

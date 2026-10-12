@@ -5,8 +5,10 @@ import {
   BellIcon,
   ChartIcon,
   FileScanIcon,
+  FlaskIcon,
   GridIcon,
   RadarIcon,
+  SlidersIcon,
   UploadIcon,
   UserIcon,
 } from '../ui/icons';
@@ -34,13 +36,19 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
         to: '/reports',
         label: 'Reports',
         icon: FileScanIcon,
-        roles: ['Security Analyst', 'Administrator', 'Researcher'],
+        roles: ['Security Analyst', 'SOC Team Member', 'Administrator', 'Researcher'],
       },
       {
         to: '/behavior',
         label: 'Behavior Analysis',
         icon: ActivityIcon,
         roles: ['Security Analyst', 'SOC Team Member', 'Administrator', 'Researcher'],
+      },
+      {
+        to: '/research',
+        label: 'Research',
+        icon: FlaskIcon,
+        roles: ['Security Analyst', 'Administrator', 'Researcher'],
       },
     ],
   },
@@ -63,6 +71,17 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
     ],
   },
   {
+    heading: 'Administration',
+    items: [
+      {
+        to: '/admin',
+        label: 'Admin Console',
+        icon: SlidersIcon,
+        roles: ['Administrator'],
+      },
+    ],
+  },
+  {
     heading: 'Account',
     items: [{ to: '/profile', label: 'Profile', icon: UserIcon, roles: 'all' }],
   },
@@ -70,6 +89,12 @@ export const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
 
 export const canSee = (item: NavItem, role: UserRole | undefined): boolean =>
   item.roles === 'all' || (role !== undefined && item.roles.includes(role));
+
+/** Whether a role may open a route (same table as the sidebar, so the two never drift). */
+export const canOpen = (path: string, role: UserRole | undefined): boolean => {
+  const item = NAV_SECTIONS.flatMap((s) => s.items).find((i) => i.to === path);
+  return item ? canSee(item, role) : true;
+};
 
 export const visibleSections = (role: UserRole | undefined) =>
   NAV_SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => canSee(i, role)) })).filter(

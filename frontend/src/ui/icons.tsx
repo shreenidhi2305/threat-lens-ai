@@ -172,3 +172,18 @@ export const CodeIcon = (p: IconProps) => (
     <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />
   </Base>
 );
+
+export const SlidersIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 7h9m4 0h3M4 17h3m4 0h9M4 12h16" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
+  </Base>
+);
+
+export const FlaskIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 3h6M10 3v6l-5.2 9a2 2 0 001.7 3h11a2 2 0 001.7-3L14 9V3" />
+    <path d="M7.5 15h9" />
+  </Base>
+);

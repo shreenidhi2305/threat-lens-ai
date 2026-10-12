@@ -1,14 +1,48 @@
-from fastapi import APIRouter, HTTPException, status
+import logging
 
+from fastapi import APIRouter, HTTPException, Request, status
+
+from app.core.config import settings
+from app.modules.audit.service import audit_service
 from app.modules.auth.schemas import LoginRequest, TokenResponse
-from app.modules.auth.service import auth_service
+from app.modules.auth.service import AuthNotConfiguredError, auth_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get('/config')
+def auth_config() -> dict:
+    """Public: how sign-in works on this server, so the login page can describe it honestly."""
+    return {
+        'mode': 'supabase' if settings.supabase_configured else 'dev',
+        'dev_login': settings.dev_login_enabled and not settings.supabase_configured,
+        'password_required': (not settings.supabase_configured) and settings.dev_login_password_required,
+    }
+
+
 @router.post('/login', response_model=TokenResponse)
-def login(payload: LoginRequest) -> TokenResponse:
+def login(payload: LoginRequest, request: Request) -> TokenResponse:
     try:
-        return auth_service.login(payload.email, payload.password)
+        token = auth_service.login(payload.email, payload.password)
+    except AuthNotConfiguredError as exc:
+        audit_service.record_request(
+            request, 'auth.login_failed', actor=payload.email, status='failure',
+            detail='authentication not configured',
+        )
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials') from exc
+        audit_service.record_request(
+            request, 'auth.login_failed', actor=payload.email, status='failure',
+            detail='invalid credentials',
+        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid credentials') from exc
+    except Exception as exc:  # noqa: BLE001 - identity provider errors must not leak details
+        logger.exception('Sign-in failed unexpectedly')
+        audit_service.record_request(
+            request, 'auth.login_failed', actor=payload.email, status='failure',
+            detail='identity provider error',
+        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid credentials') from exc
+    audit_service.record_request(request, 'auth.login', actor=payload.email.strip().lower())
+    return token

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { NotificationBell } from '../components/NotificationBell';
-import { visibleSections } from '../lib/nav';
+import { canOpen, visibleSections } from '../lib/nav';
+import { Button } from '../ui/Button';
 import { ChevronDownIcon, LogoutIcon, ShieldIcon } from '../ui/icons';
+import { EmptyState, Spinner } from '../ui/primitives';
 
 const NOTIFIABLE_ROLES = new Set(['Security Analyst', 'SOC Team Member', 'Administrator']);
 
@@ -13,14 +15,16 @@ const TITLES: Record<string, string> = {
   '/submit': 'Submit File',
   '/reports': 'Analysis Report',
   '/behavior': 'Behavior Analysis',
+  '/research': 'Research',
   '/threats': 'Threat Monitor',
   '/alerts': 'Alerts',
   '/analytics': 'Analytics',
+  '/admin': 'Admin Console',
   '/profile': 'Profile',
 };
 
-function initials(email: string): string {
-  return email.slice(0, 2).toUpperCase();
+function initials(name: string): string {
+  return name.slice(0, 2).toUpperCase();
 }
 
 function UserMenu() {
@@ -34,8 +38,15 @@ function UserMenu() {
     const onClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   if (!user) return null;
@@ -44,13 +55,17 @@ function UserMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className="flex items-center gap-2 rounded-md py-1 pl-1 pr-2 transition-colors duration-150 ease-out hover:bg-surface-raised"
       >
         <span className="grid size-7 place-items-center rounded-md bg-accent-quiet text-2xs font-semibold text-accent">
-          {initials(user.email)}
+          {initials(user.display_name || user.email)}
         </span>
         <span className="hidden text-left sm:block">
-          <span className="block text-xs font-medium leading-tight text-text">{user.email}</span>
+          <span className="block text-xs font-medium leading-tight text-text">
+            {user.display_name || user.email}
+          </span>
           <span className="block text-2xs leading-tight text-muted">{user.role}</span>
         </span>
         <ChevronDownIcon className="text-muted" />
@@ -81,9 +96,10 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const sections = visibleSections(user?.role);
   const title = TITLES[pathname] ?? 'ThreatLens';
+  const allowed = canOpen(pathname, user?.role);
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="flex min-h-dvh bg-bg">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface md:flex">
         <div className="flex h-14 items-center gap-2 px-5">
           <ShieldIcon className="text-lg text-accent" />
@@ -154,7 +170,28 @@ export function AppLayout() {
         </nav>
 
         <main className="mx-auto w-full max-w-[1180px] flex-1 px-5 py-7 sm:px-8">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-20">
+                <Spinner />
+              </div>
+            }
+          >
+            {allowed ? (
+              <Outlet />
+            ) : (
+              <EmptyState
+                icon={<ShieldIcon />}
+                title="Not available for your role"
+                description={`${title} is restricted. Your role (${user?.role ?? 'unknown'}) doesn't include it.`}
+                action={
+                  <Link to="/dashboard">
+                    <Button variant="secondary">Back to overview</Button>
+                  </Link>
+                }
+              />
+            )}
+          </Suspense>
         </main>
       </div>
     </div>

@@ -16,6 +16,7 @@ class Detection(BaseModel):
     family: str | None = None
     ml_probability: float | None = None
     ml_category: str | None = None
+    ml_applicable: bool | None = None
     yara_rule_count: int = 0
     signature: str | None = None
     model_version: str | None = None

@@ -1,0 +1,16 @@
+# Used when building from the repository root (deploy/allinone/Dockerfile).
+.git
+.github
+.claude
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.cache
+frontend/dist
+backend/var
+backend/tests
+.env
+.env.*
+docs
+*.zip
