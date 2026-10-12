@@ -292,11 +292,11 @@ export function ThreatsPage() {
                         title={`${b.label}: ${b.total} (${b.malicious} mal / ${b.suspicious} susp)`}
                         className={`min-w-0 flex-1 rounded-sm ${
                           b.malicious > 0
-                            ? 'bg-risk-high/80'
+                            ? 'bg-risk-high'
                             : b.suspicious > 0
-                              ? 'bg-risk-medium/80'
+                              ? 'bg-risk-medium'
                               : b.total > 0
-                                ? 'bg-risk-low/70'
+                                ? 'bg-risk-low'
                                 : 'bg-surface-raised'
                         }`}
                         style={{ height: `${Math.max((b.total / maxBucket) * 100, b.total ? 6 : 4)}%` }}
