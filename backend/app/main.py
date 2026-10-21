@@ -45,7 +45,12 @@ async def lifespan(_app: FastAPI):
 
 def create_application() -> FastAPI:
     configure_logging()
-    app = FastAPI(title=settings.PROJECT_NAME, version=settings.API_VERSION, lifespan=lifespan)
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        version=settings.API_VERSION,
+        lifespan=lifespan,
+        license_info={'name': 'MIT License', 'identifier': 'MIT'},
+    )
 
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)

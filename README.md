@@ -131,6 +131,12 @@ Production images (nginx + API), a real-deployment path with Supabase, the secur
 troubleshooting are in `docs/DEPLOYMENT.md`. CI (`.github/workflows/ci.yml`) builds and smoke-tests
 both images on every push.
 
+## License
+
+ThreatLens AI is released under the [MIT License](LICENSE). The open-source components it builds on,
+their licenses, and the dataset and trademark acknowledgements are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Contribution workflow
 
 1. Create a branch
